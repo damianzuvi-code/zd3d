@@ -448,6 +448,9 @@
     <button class="nav-btn" onclick="showSection('trabajos')">
       <span class="icon">≡</span> Trabajos
     </button>
+    <button class="nav-btn" onclick="showSection('catalogo')">
+      <span class="icon">📚</span> Catálogo
+    </button>
     <button class="nav-btn" onclick="showSection('promos')">
       <span class="icon">🎁</span> Extras
     </button>
@@ -595,7 +598,14 @@
           <input class="form-input" id="q-cliente" placeholder="Nombre del cliente">
         </div>
         <div class="form-group">
-          <label class="form-label" style="display:flex;justify-content:space-between">Archivo STL <a href="#" onclick="showCatalogoPicker();return false;" style="color:var(--warning);text-decoration:none;font-size:11px;font-family:'Exo 2',sans-serif">📚 Catálogo</a></label>
+          <label class="form-label">Nº Item Catálogo</label>
+          <input class="form-input" id="q-item" placeholder="Ej: 101" onchange="buscarCatalogo()">
+        </div>
+      </div>
+
+      <div class="form-row" style="margin-bottom:12px">
+        <div class="form-group" style="width:100%">
+          <label class="form-label" style="display:flex;justify-content:space-between">Archivo STL <a href="#" onclick="showCatalogoPicker();return false;" style="color:var(--warning);text-decoration:none;font-size:11px;font-family:'Exo 2',sans-serif">📚 Ver Catálogo</a></label>
           <input class="form-input" id="q-stl" placeholder="Nombre del archivo">
         </div>
       </div>
@@ -658,9 +668,12 @@
         </div>
       </div>
 
-      <button class="btn btn-primary" style="width:100%;margin-top:12px" onclick="saveJob()">
-        📤 Guardar Trabajo en la Nube
-      </button>
+      <div style="display:flex;gap:10px;margin-top:12px">
+        <button class="btn btn-secondary" style="flex:0.4;border-color:var(--danger);color:var(--danger)" onclick="limpiarCotizador()">🗑 Borrar Todo</button>
+        <button class="btn btn-primary" style="flex:1" onclick="saveJob()">
+          📤 Guardar Trabajo en la Nube
+        </button>
+      </div>
     </div>
 
     <div>
@@ -832,6 +845,44 @@
   </div>
 </section>
 
+<!-- ──────────── CATALOGO STL ──────────── -->
+<section id="sec-catalogo" class="section">
+  <div class="page-title">Catálogo STL <span class="badge">BIBLIOTECA</span></div>
+
+  <div class="card" style="margin-bottom:20px">
+    <div class="card-title"><span class="dot"></span> Agregar Nuevo Artículo</div>
+    <div class="form-row-3" style="margin-bottom:12px">
+      <div class="form-group">
+        <label class="form-label">Nº de Ítem</label>
+        <input class="form-input" id="cat-item" placeholder="Ej: 101">
+      </div>
+      <div class="form-group" style="grid-column: span 2">
+        <label class="form-label">Nombre del STL</label>
+        <input class="form-input" id="cat-nombre" placeholder="Nombre (Ej: Maceta Groot)">
+      </div>
+    </div>
+    <div class="form-row-3" style="margin-bottom:12px">
+      <div class="form-group">
+        <label class="form-label">Gramos (g)</label>
+        <input class="form-input" id="cat-gramos" type="number" placeholder="Ej: 50">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Horas</label>
+        <input class="form-input" id="cat-horas" type="number" placeholder="Ej: 2.5">
+      </div>
+      <div class="form-group">
+        <label class="form-label">URL de Imagen <span style="font-size:10px;font-weight:400">(opcional)</span></label>
+        <input class="form-input" id="cat-imagen" placeholder="https://...">
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="guardarItemCatalogoTab()" style="width:100%">💾 Guardar en Catálogo</button>
+  </div>
+
+  <div class="grid-2" id="catalogo-grid">
+    <!-- Generado por JS -->
+  </div>
+</section>
+
 <!-- ──────────── CONFIG ──────────── -->
 <section id="sec-config" class="section">
   <div class="page-title">Configuración <span class="badge">SISTEMA</span></div>
@@ -948,7 +999,7 @@ window.onload = async () => {
       if (dCons?.consumibles) bibliotecaConsumibles = dCons.consumibles;
       if (dFil?.filamentos)   bibliotecaFilamentos  = dFil.filamentos;
       if (dProm?.promos)      bibliotecaPromos      = dProm.promos;
-      if (dStl?.stls)         bibliotecaSTL         = dStl.stls;
+      if (dStl?.stls)         { bibliotecaSTL = dStl.stls; renderCatalogoTab(); }
 
       updateDashboard();
       renderJobs();
@@ -1728,6 +1779,35 @@ function usarSTL(nombre, gramos, horas) {
   toast('📚', 'STL cargado');
 }
 
+function buscarCatalogo() {
+  const item = document.getElementById('q-item').value.trim();
+  if (!item) return;
+  const match = bibliotecaSTL.find(s => s.item === item);
+  if (match) {
+    document.getElementById('q-stl').value = match.nombre;
+    document.getElementById('q-gramos').value = match.gramos;
+    document.getElementById('q-horas').value = match.horas;
+    calcQuote();
+    toast('📚', 'Ítem encontrado y cargado');
+  } else {
+    toast('⚠️', 'Ítem no encontrado');
+  }
+}
+
+function limpiarCotizador() {
+  document.getElementById('q-cliente').value = '';
+  document.getElementById('q-item').value = '';
+  document.getElementById('q-stl').value = '';
+  document.getElementById('q-gramos').value = '';
+  document.getElementById('q-horas').value = '';
+  document.getElementById('q-rollo').value = '';
+  document.getElementById('q-adelanto').value = '';
+  trabajoConsumibles = [];
+  renderTrabajoConsumibles();
+  calcQuote();
+  toast('🗑️', 'Cotizador limpio');
+}
+
 async function guardarNuevoSTL() {
   const nombre = document.getElementById('new-stl-nombre').value.trim();
   const gramos = parseFloat(document.getElementById('new-stl-gramos').value) || 0;
@@ -1759,7 +1839,74 @@ async function eliminarSTLLib(id) {
     });
   }
   cerrarPickerCatalogo();
+  renderCatalogoTab();
   setTimeout(showCatalogoPicker, 50);
+}
+
+function renderCatalogoTab() {
+  const c = document.getElementById('catalogo-grid');
+  if (!c) return;
+  if (!bibliotecaSTL.length) {
+    c.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--text-dim);padding:20px">No hay ítems en el catálogo</div>';
+    return;
+  }
+  c.innerHTML = bibliotecaSTL.map(s => `
+    <div class="card" style="display:flex;gap:12px;align-items:flex-start">
+      <div style="width:70px;height:70px;border-radius:8px;background:var(--dark-bg);display:flex;align-items:center;justify-content:center;overflow:hidden;border:1px solid var(--border)">
+        ${s.imagen ? \`<img src="\${s.imagen}" style="width:100%;height:100%;object-fit:cover">\` : '<span style="font-size:24px;opacity:0.2">📦</span>'}
+      </div>
+      <div style="flex:1">
+        <div style="font-size:10px;color:var(--blue-bright);letter-spacing:1px;font-family:'Exo 2',sans-serif">ITEM #\${s.item || s.id.slice(-4)}</div>
+        <div style="font-weight:600;color:var(--white);margin-bottom:4px">\${s.nombre}</div>
+        <div style="font-size:12px;color:var(--text-dim);margin-bottom:8px">\${s.gramos}g | \${s.horas}h</div>
+      </div>
+      <button onclick="eliminarItemCatalogoTab('\${s.id}')" class="btn btn-secondary btn-sm" style="border-color:var(--danger);color:var(--danger);padding:4px 8px">✕</button>
+    </div>
+  `).join('');
+}
+
+async function guardarItemCatalogoTab() {
+  const item   = document.getElementById('cat-item').value.trim();
+  const nombre = document.getElementById('cat-nombre').value.trim();
+  const gramos = parseFloat(document.getElementById('cat-gramos').value) || 0;
+  const horas  = parseFloat(document.getElementById('cat-horas').value) || 0;
+  const imagen = document.getElementById('cat-imagen').value.trim();
+  
+  if (!nombre) { toast('⚠️', 'Completá el nombre'); return; }
+  
+  const id = Date.now()+'';
+  const stlObj = { id, item, nombre, gramos, horas, imagen };
+  bibliotecaSTL.push(stlObj);
+  
+  if (config.scriptUrl) {
+    fetch(config.scriptUrl, {
+      method: 'POST', mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'saveCatalogo', ...stlObj })
+    });
+  }
+  
+  document.getElementById('cat-item').value = '';
+  document.getElementById('cat-nombre').value = '';
+  document.getElementById('cat-gramos').value = '';
+  document.getElementById('cat-horas').value = '';
+  document.getElementById('cat-imagen').value = '';
+  
+  renderCatalogoTab();
+  toast('✅', 'Ítem agregado al catálogo');
+}
+
+async function eliminarItemCatalogoTab(id) {
+  bibliotecaSTL = bibliotecaSTL.filter(s => s.id !== id);
+  if (config.scriptUrl) {
+    fetch(config.scriptUrl, {
+      method: 'POST', mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'deleteCatalogo', id })
+    });
+  }
+  renderCatalogoTab();
+  toast('✅', 'Ítem eliminado');
 }
 
 // ─── Renderizado de Trabajos ───
