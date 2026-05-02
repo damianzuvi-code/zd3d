@@ -448,6 +448,9 @@
     <button class="nav-btn" onclick="showSection('trabajos')">
       <span class="icon">≡</span> Trabajos
     </button>
+    <button class="nav-btn" onclick="showSection('promos')">
+      <span class="icon">🎁</span> Extras
+    </button>
     <button class="nav-btn" onclick="showSection('config')">
       <span class="icon">✦</span> Config
     </button>
@@ -582,13 +585,17 @@
         <button class="btn btn-secondary btn-sm" onclick="showPromoPicker()" style="border-color:var(--warning);color:var(--warning)">🎁 Cargar Promo</button>
       </div>
 
-      <div class="form-row">
+      <div class="form-row-3">
+        <div class="form-group">
+          <label class="form-label">Fecha</label>
+          <input class="form-input" id="q-fecha" type="date">
+        </div>
         <div class="form-group">
           <label class="form-label">Cliente</label>
           <input class="form-input" id="q-cliente" placeholder="Nombre del cliente">
         </div>
         <div class="form-group">
-          <label class="form-label">Archivo STL</label>
+          <label class="form-label" style="display:flex;justify-content:space-between">Archivo STL <a href="#" onclick="showCatalogoPicker();return false;" style="color:var(--warning);text-decoration:none;font-size:11px;font-family:'Exo 2',sans-serif">📚 Catálogo</a></label>
           <input class="form-input" id="q-stl" placeholder="Nombre del archivo">
         </div>
       </div>
@@ -642,6 +649,13 @@
         </div>
         <div id="q-consumibles-trabajo"></div>
         <div id="q-consumibles-empty" style="font-size:12px;color:var(--text-dim);padding:4px 0">Sin consumibles. Usá "+ Agregar" para sumar materiales extra.</div>
+      </div>
+
+      <div class="form-row" style="margin-top:16px;border-top:1px solid var(--border);padding-top:16px">
+        <div class="form-group" style="margin-bottom:0;width:100%">
+          <label class="form-label" style="display:flex;justify-content:space-between">Monto de Seña / Adelanto ($) <span style="font-weight:400;color:var(--text-dim)">(Opcional)</span></label>
+          <input class="form-input" id="q-adelanto" type="number" placeholder="Ej: 5000">
+        </div>
       </div>
 
       <button class="btn btn-primary" style="width:100%;margin-top:12px" onclick="saveJob()">
@@ -758,6 +772,66 @@
   </div>
 </section>
 
+<!-- ──────────── PROMOS Y ESPECIALES ──────────── -->
+<section id="sec-promos" class="section">
+  <div class="page-title">Promos y Especiales <span class="badge">EXTRAS</span></div>
+
+  <div class="grid-2">
+    <!-- TRABAJOS ESPECIALES -->
+    <div class="card">
+      <div class="card-title"><span class="dot"></span> Registrar Trabajo Especial</div>
+      <div style="font-size:13px;color:var(--text-dim);margin-bottom:16px">Use esta opción para registrar ventas rápidas, trabajos sin diseño o cualquier ingreso que no requiera el cotizador completo.</div>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Fecha</label>
+          <input class="form-input" id="esp-fecha" type="date">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Cliente</label>
+          <input class="form-input" id="esp-cliente" placeholder="Nombre del cliente">
+        </div>
+      </div>
+      
+      <div class="form-group" style="margin-bottom:14px">
+        <label class="form-label">Descripción / Detalle</label>
+        <input class="form-input" id="esp-desc" placeholder="Ej: Venta de llaveros surtidos">
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">Monto Final ($)</label>
+        <input class="form-input" id="esp-precio" type="number" placeholder="Ej: 15000">
+      </div>
+      
+      <button class="btn btn-primary" style="width:100%;margin-top:8px" onclick="registrarTrabajoEspecial()">
+        💾 Guardar Trabajo Especial
+      </button>
+    </div>
+
+    <!-- GESTOR DE PROMOS -->
+    <div class="card">
+      <div class="card-title"><span class="dot"></span> Gestor de Promociones</div>
+      <div style="font-size:13px;color:var(--text-dim);margin-bottom:16px">Administre las promociones predefinidas que aparecen en el cotizador.</div>
+      
+      <div id="promos-list-container" style="max-height:220px;overflow-y:auto;margin-bottom:16px">
+        <!-- Generado por JS -->
+      </div>
+      
+      <div style="border-top:1px solid var(--border);padding-top:16px">
+        <div class="form-label">Nueva Promo</div>
+        <div class="form-row" style="margin-bottom:8px">
+          <input class="form-input" id="tab-promo-nombre" placeholder="Nombre (Ej: Llaveros x20)">
+          <input class="form-input" id="tab-promo-precio" type="number" placeholder="Precio ($)">
+        </div>
+        <div style="display:flex;gap:8px">
+          <input class="form-input" id="tab-promo-desc" placeholder="Descripción breve" style="flex:1">
+          <button class="btn btn-secondary" style="border-color:var(--warning);color:var(--warning)" onclick="guardarPromoTab()">Agregar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- ──────────── CONFIG ──────────── -->
 <section id="sec-config" class="section">
   <div class="page-title">Configuración <span class="badge">SISTEMA</span></div>
@@ -829,12 +903,18 @@ let config = {
   ]
 };
 let allJobs = [];
+let bibliotecaSTL = [];
 
 // ─── Init ───
 window.onload = async () => {
   loadConfig();
   renderMachinesGrid();
   loadMachineEdit();
+
+  // Set default date to today
+  const today = new Date();
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+  if (document.getElementById('q-fecha')) document.getElementById('q-fecha').value = todayStr;
 
   // Poblar selector de año con año actual
   const yearSel = document.getElementById('graf-year');
@@ -847,18 +927,20 @@ window.onload = async () => {
   if (config.scriptUrl) {
     toast('⏳', 'Sincronizando datos…');
     try {
-      // Cargar trabajos, consumibles, filamentos y promos en paralelo
-      const [rJobs, rCons, rFil, rProm] = await Promise.all([
+      // Cargar trabajos, consumibles, filamentos, promos y catalogo en paralelo
+      const [rJobs, rCons, rFil, rProm, rStl] = await Promise.all([
         fetch(`${config.scriptUrl}?action=getData`),
         fetch(`${config.scriptUrl}?action=getConsumibles`),
         fetch(`${config.scriptUrl}?action=getFilamentos`),
-        fetch(`${config.scriptUrl}?action=getPromos`)
+        fetch(`${config.scriptUrl}?action=getPromos`),
+        fetch(`${config.scriptUrl}?action=getCatalogo`)
       ]);
 
       const dJobs = await rJobs.json();
       const dCons = await rCons.json();
       const dFil  = await rFil.json();
       const dProm = await rProm.json();
+      const dStl  = await rStl.json();
 
       if (dJobs?.jobs) {
         allJobs = dJobs.jobs.map(j => ({ ...j, pago: j.pago || 'Pendiente' }));
@@ -866,6 +948,7 @@ window.onload = async () => {
       if (dCons?.consumibles) bibliotecaConsumibles = dCons.consumibles;
       if (dFil?.filamentos)   bibliotecaFilamentos  = dFil.filamentos;
       if (dProm?.promos)      bibliotecaPromos      = dProm.promos;
+      if (dStl?.stls)         bibliotecaSTL         = dStl.stls;
 
       updateDashboard();
       renderJobs();
@@ -890,6 +973,12 @@ function showSection(name) {
   if (name === 'maquinas') renderMachinesGrid();
   if (name === 'dashboard') updateDashboard();
   if (name === 'cotizar') { trabajoConsumibles = []; renderConsumiblesDelTrabajo(); calcQuote(); }
+  if (name === 'promos') { 
+    if (typeof renderPromosTab === 'function') renderPromosTab();
+    const today = new Date();
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+    if (document.getElementById('esp-fecha')) document.getElementById('esp-fecha').value = todayStr;
+  }
 }
 
 // ─── Config persistente ───
@@ -1470,9 +1559,210 @@ async function eliminarPromoLib(id) {
       body: JSON.stringify({ action: 'deletePromo', id })
     });
   }
-  cerrarPickerPromo();
-  setTimeout(showPromoPicker, 50);
+  const m = document.getElementById('promo-picker-modal');
+  if (m) {
+    cerrarPickerPromo();
+    setTimeout(showPromoPicker, 50);
+  }
+  if (typeof renderPromosTab === 'function') renderPromosTab();
 }
+
+function renderPromosTab() {
+  const container = document.getElementById('promos-list-container');
+  if (!container) return;
+  const list = bibliotecaPromos.map(p => `
+    <div style="background:var(--dark-card2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <div style="font-size:13px;color:var(--white);font-weight:600">${p.nombre}</div>
+        <div style="font-size:11px;color:var(--text-dim)">${p.descripcion}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <span style="font-family:'Rajdhani',sans-serif;font-size:15px;color:var(--warning);font-weight:700">$${Math.round(p.precio).toLocaleString('es-AR')}</span>
+        <button onclick="eliminarPromoLib('${p.id}')" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:var(--danger);border-radius:6px;padding:4px 8px;cursor:pointer;font-size:10px">✕</button>
+      </div>
+    </div>
+  `).join('');
+  container.innerHTML = list || '<div style="font-size:12px;color:var(--text-dim);padding:20px 0;text-align:center">No hay promos guardadas.</div>';
+}
+
+async function guardarPromoTab() {
+  const nombre = document.getElementById('tab-promo-nombre').value.trim();
+  const desc   = document.getElementById('tab-promo-desc').value.trim();
+  const precio = parseFloat(document.getElementById('tab-promo-precio').value) || 0;
+  if (!nombre || !precio) { toast('⚠️', 'Completá nombre y precio'); return; }
+  
+  const id = Date.now()+'';
+  const promo = { id, nombre, descripcion: desc, precio };
+  bibliotecaPromos.push(promo);
+  
+  if (config.scriptUrl) {
+    fetch(config.scriptUrl, {
+      method: 'POST', mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'savePromo', ...promo })
+    });
+  }
+  
+  document.getElementById('tab-promo-nombre').value = '';
+  document.getElementById('tab-promo-desc').value = '';
+  document.getElementById('tab-promo-precio').value = '';
+  renderPromosTab();
+  toast('✅', 'Promo guardada');
+}
+
+function registrarTrabajoEspecial() {
+  const fecha = document.getElementById('esp-fecha').value;
+  const cliente = document.getElementById('esp-cliente').value.trim();
+  const desc = document.getElementById('esp-desc').value.trim();
+  const precio = parseFloat(document.getElementById('esp-precio').value) || 0;
+  
+  if (!cliente || !desc || !precio) { toast('⚠️', 'Completá cliente, descripción y monto'); return; }
+  
+  let fechaStr = new Date().toLocaleDateString('es-AR');
+  if (fecha) {
+    const d = new Date(fecha + 'T12:00:00');
+    fechaStr = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+  }
+
+  const payload = {
+    action: 'saveJob',
+    fecha: fechaStr,
+    cliente,
+    stl: desc,
+    maquina: 'Sin máquina',
+    estado: 'Listo',
+    pago: 'Pendiente',
+    consumibles: '',
+    margen: 'Trabajo Especial',
+    precio: precio.toFixed(2),
+    gramos: 0,
+    horas: 0,
+  };
+
+  if (!config.scriptUrl) {
+    allJobs.push(payload);
+    updateDashboard();
+    toast('💾', 'Trabajo especial guardado localmente');
+    document.getElementById('esp-cliente').value = '';
+    document.getElementById('esp-desc').value = '';
+    document.getElementById('esp-precio').value = '';
+    return;
+  }
+
+  toast('⏳', 'Enviando a la nube…');
+  fetch(config.scriptUrl, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+    headers: { 'Content-Type': 'text/plain' },
+    mode: 'no-cors'
+  }).then(() => {
+    allJobs.push(payload);
+    updateDashboard();
+    toast('✅', 'Trabajo especial guardado');
+    document.getElementById('esp-cliente').value = '';
+    document.getElementById('esp-desc').value = '';
+    document.getElementById('esp-precio').value = '';
+  }).catch(() => {
+    toast('❌', 'Error al guardar');
+  });
+}
+
+// ─── Catálogo STL ───
+function showCatalogoPicker() {
+  document.getElementById('catalogo-picker-modal')?.remove();
+  const modal = document.createElement('div');
+  modal.id = 'catalogo-picker-modal';
+  modal.className = 'edit-modal-overlay';
+  modal.style.zIndex = '9999';
+  
+  const listHTML = bibliotecaSTL.map(s => `
+    <div style="background:var(--dark-card);border:1px solid var(--border);padding:8px 12px;border-radius:6px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <div style="font-size:13px;color:var(--white);font-weight:600">${s.nombre}</div>
+        <div style="font-size:11px;color:var(--text-dim)">${s.gramos}g | ${s.horas}h</div>
+      </div>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-secondary btn-sm" onclick="usarSTL('${s.nombre}', ${s.gramos}, ${s.horas})">Seleccionar</button>
+        <button onclick="eliminarSTLLib('${s.id}')" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:12px;padding:4px">✕</button>
+      </div>
+    </div>
+  `).join('');
+
+  const inner = document.createElement('div');
+  inner.className = 'edit-modal';
+  inner.style.maxWidth = '400px';
+  inner.innerHTML = `
+    <div class="edit-modal-title">📚 Catálogo STL Frecuentes</div>
+    <div style="max-height:220px;overflow-y:auto;margin-bottom:12px;padding-right:4px">
+      ${listHTML || '<div style="font-size:12px;color:var(--text-dim);text-align:center;padding:10px 0">No hay STLs guardados</div>'}
+    </div>
+    
+    <div style="border-top:1px solid var(--border);padding-top:12px">
+      <div style="font-size:11px;color:var(--text-dim);margin-bottom:6px">Añadir al catálogo:</div>
+      <div style="display:flex;gap:6px;margin-bottom:6px">
+        <input class="form-input" id="new-stl-nombre" placeholder="Nombre STL" style="font-size:13px;padding:8px 12px;flex:1">
+      </div>
+      <div style="display:flex;gap:6px;margin-bottom:12px">
+        <input class="form-input" id="new-stl-gramos" type="number" placeholder="Gramos" style="font-size:13px;padding:8px 12px;width:50%">
+        <input class="form-input" id="new-stl-horas" type="number" placeholder="Horas" style="font-size:13px;padding:8px 12px;width:50%">
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="guardarNuevoSTL()" style="width:100%;background:linear-gradient(135deg, #1a9fd4, #29c4ff)">💾 Guardar y Seleccionar</button>
+    </div>
+    <button onclick="cerrarPickerCatalogo()" style="margin-top:16px;width:100%;padding:8px;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:8px;color:var(--text-dim);cursor:pointer;font-size:13px">Cerrar</button>
+  `;
+  modal.appendChild(inner);
+  modal.addEventListener('click', e => { if (e.target === modal) cerrarPickerCatalogo(); });
+  document.body.appendChild(modal);
+}
+
+function cerrarPickerCatalogo() {
+  document.getElementById('catalogo-picker-modal')?.remove();
+}
+
+function usarSTL(nombre, gramos, horas) {
+  document.getElementById('q-stl').value = nombre;
+  document.getElementById('q-gramos').value = gramos;
+  document.getElementById('q-horas').value = horas;
+  calcQuote();
+  cerrarPickerCatalogo();
+  toast('📚', 'STL cargado');
+}
+
+async function guardarNuevoSTL() {
+  const nombre = document.getElementById('new-stl-nombre').value.trim();
+  const gramos = parseFloat(document.getElementById('new-stl-gramos').value) || 0;
+  const horas  = parseFloat(document.getElementById('new-stl-horas').value) || 0;
+  if (!nombre) { toast('⚠️', 'Completá el nombre'); return; }
+  
+  const id = Date.now()+'';
+  const stlObj = { id, nombre, gramos, horas };
+  bibliotecaSTL.push(stlObj);
+  
+  if (config.scriptUrl) {
+    fetch(config.scriptUrl, {
+      method: 'POST', mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'saveCatalogo', ...stlObj })
+    });
+  }
+  
+  usarSTL(nombre, gramos, horas);
+}
+
+async function eliminarSTLLib(id) {
+  bibliotecaSTL = bibliotecaSTL.filter(s => s.id !== id);
+  if (config.scriptUrl) {
+    fetch(config.scriptUrl, {
+      method: 'POST', mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'deleteCatalogo', id })
+    });
+  }
+  cerrarPickerCatalogo();
+  setTimeout(showCatalogoPicker, 50);
+}
+
+// ─── Renderizado de Trabajos ───
 
 // ─── Modo margen ───
 let margenMode = 'pct';
@@ -1600,17 +1890,30 @@ async function saveJob() {
 
   const payload = {
     action: 'saveJob',
-    fecha: new Date().toLocaleDateString('es-AR'),
+    fecha: (() => {
+      const fi = document.getElementById('q-fecha').value;
+      if (fi) {
+        const d = new Date(fi + 'T12:00:00');
+        return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+      }
+      return new Date().toLocaleDateString('es-AR');
+    })(),
     cliente,
     stl,
     maquina: config.machines[mi]?.name || `Máquina ${mi+1}`,
     estado: 'Pendiente',
-    pago: 'Pendiente',
+    pago: (() => {
+      const ad = parseFloat(document.getElementById('q-adelanto')?.value) || 0;
+      if (ad >= q.total) return 'Pagado';
+      if (ad > 0) return 'Señado';
+      return 'Pendiente';
+    })(),
     consumibles: trabajoConsumibles.map(c => c.nombre + ' $' + Math.round(c.precio)).join(' | '),
     margen: margenMode === 'pct' ? (document.getElementById('q-margen').value + '%') : ('$' + document.getElementById('q-margen').value),
     precio: q.total.toFixed(2),
     gramos: document.getElementById('q-gramos').value,
     horas: document.getElementById('q-horas').value,
+    adelanto: parseFloat(document.getElementById('q-adelanto')?.value) || 0,
   };
 
   if (!config.scriptUrl) {
@@ -1685,8 +1988,10 @@ function renderJobs() {
       <td><strong style="font-family:'Rajdhani',sans-serif;font-size:16px;color:var(--success)">$${parseFloat(j.precio||0).toLocaleString('es-AR')}</strong></td>
       <td>
         ${j.pago === 'Pagado'
-          ? '<span style="font-size:11px;color:var(--success);font-weight:600">💵 Pagado</span>'
-          : `<button onclick="cambiarPago(${idx},'Pagado')" style="background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.3);color:var(--success);border-radius:6px;padding:4px 10px;cursor:pointer;font-size:11px;font-family:'Exo 2',sans-serif">Marcar pagado</button>`
+          ? '<span style="font-size:11px;color:var(--success);font-weight:600">✅ Pagado</span>'
+          : j.pago === 'Señado'
+            ? `<span style="font-size:11px;color:var(--warning);font-weight:600">💸 Señado: $${(parseFloat(j.adelanto)||0).toLocaleString('es-AR')}</span>`
+            : `<button onclick="cambiarPago(${idx},'Pagado')" style="background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.3);color:var(--success);border-radius:6px;padding:4px 10px;cursor:pointer;font-size:11px;font-family:'Exo 2',sans-serif">Cobrar</button>`
         }
       </td>
       <td>
@@ -1735,6 +2040,15 @@ function abrirEditar(idx) {
   // Remover modal anterior si existe
   document.getElementById('edit-job-modal')?.remove();
 
+  let isoFecha = '';
+  if (job.fecha && job.fecha.includes('/')) {
+    const p = job.fecha.split('/');
+    if (p.length === 3) isoFecha = `${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`;
+  } else if (job.fecha) {
+    const d = new Date(job.fecha);
+    if (!isNaN(d.getTime())) isoFecha = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+
   const overlay = document.createElement('div');
   overlay.id = 'edit-job-modal';
   overlay.className = 'edit-modal-overlay';
@@ -1759,7 +2073,7 @@ function abrirEditar(idx) {
       <div class="form-row" style="margin-bottom:14px">
         <div class="form-group">
           <label class="form-label">Fecha</label>
-          <input class="form-input" id="ej-fecha" value="${job.fecha||''}">
+          <input class="form-input" id="ej-fecha" type="date" value="${isoFecha}">
         </div>
         <div class="form-group">
           <label class="form-label">Máquina</label>
@@ -1797,19 +2111,16 @@ function abrirEditar(idx) {
 
       <div class="form-row" style="margin-bottom:14px">
         <div class="form-group">
-          <label class="form-label">Estado</label>
-          <select class="form-select" id="ej-estado">
-            <option value="Pendiente"   ${job.estado==='Pendiente'   ?'selected':''}>Pendiente</option>
-            <option value="Imprimiendo" ${job.estado==='Imprimiendo' ?'selected':''}>Imprimiendo</option>
-            <option value="Listo"       ${job.estado==='Listo'       ?'selected':''}>Listo</option>
-          </select>
-        </div>
-        <div class="form-group">
           <label class="form-label">Pago</label>
           <select class="form-select" id="ej-pago">
             <option value="Pendiente" ${(job.pago||'Pendiente')==='Pendiente'?'selected':''}>⏳ Pendiente de cobro</option>
-            <option value="Pagado"    ${job.pago==='Pagado'           ?'selected':''}>💵 Pagado</option>
+            <option value="Señado"    ${job.pago==='Señado'           ?'selected':''}>💵 Señado</option>
+            <option value="Pagado"    ${job.pago==='Pagado'           ?'selected':''}>✅ Pagado completo</option>
           </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Adelanto / Seña ($)</label>
+          <input class="form-input" id="ej-adelanto" type="number" value="${job.adelanto||''}">
         </div>
       </div>
 
@@ -1838,9 +2149,19 @@ async function guardarEdicion(fechaOrig, clienteOrig, stlOrig) {
   const idx = allJobs.findIndex(j => j.fecha === fechaOrig && j.cliente === clienteOrig && j.stl === stlOrig);
   if (idx === -1) { toast('❌', 'Trabajo no encontrado'); return; }
 
+  let finalFecha = document.getElementById('ej-fecha').value.trim();
+  if (finalFecha && finalFecha.includes('-')) {
+    const d = new Date(finalFecha + 'T12:00:00');
+    finalFecha = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+  } else if (!finalFecha) {
+    finalFecha = allJobs[idx].fecha;
+  }
+
+  const ejAdelanto = parseFloat(document.getElementById('ej-adelanto').value) || 0;
+
   allJobs[idx] = {
     ...allJobs[idx],
-    fecha:         document.getElementById('ej-fecha').value.trim(),
+    fecha:         finalFecha,
     cliente:       document.getElementById('ej-cliente').value.trim(),
     stl:           document.getElementById('ej-stl').value.trim(),
     gramos:        document.getElementById('ej-gramos').value,
@@ -1849,6 +2170,7 @@ async function guardarEdicion(fechaOrig, clienteOrig, stlOrig) {
     maquina:       document.getElementById('ej-maquina').value.trim(),
     estado:        document.getElementById('ej-estado').value,
     pago:          document.getElementById('ej-pago').value,
+    adelanto:      ejAdelanto,
     consumibles:   document.getElementById('ej-consumibles').value.trim(),
     margen:        document.getElementById('ej-margen').value.trim(),
     observaciones: document.getElementById('ej-obs').value.trim(),
