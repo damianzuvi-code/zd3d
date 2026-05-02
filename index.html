@@ -2540,6 +2540,15 @@ function abrirEditar(idx) {
           <label class="form-label">Precio Final ($)</label>
           <input class="form-input" id="ej-precio" type="number" value="${job.precio||''}">
         </div>
+        <div class="form-group">
+          <label class="form-label">Estado</label>
+          <select class="form-select" id="ej-estado">
+            <option value="Pendiente" ${(job.estado||'Pendiente')==='Pendiente'?'selected':''}>⏳ Pendiente</option>
+            <option value="Imprimiendo" ${job.estado==='Imprimiendo'?'selected':''}>🖨️ Imprimiendo</option>
+            <option value="Listo" ${job.estado==='Listo'?'selected':''}>✅ Listo</option>
+          </select>
+        </div>
+      </div>
 
       <div class="form-row" style="margin-bottom:14px">
         <div class="form-group">
