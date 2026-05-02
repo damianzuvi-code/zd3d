@@ -169,6 +169,8 @@
   .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
   .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
   .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; margin-bottom: 24px; }
+  .filter-bar { display: flex; gap: 12px; margin-bottom: 20px; align-items: center; flex-wrap: wrap; }
 
   /* ─── STAT BOXES ─── */
   .stat-box {
@@ -381,15 +383,33 @@
   /* ─── RESPONSIVE ─── */
   @media(max-width:900px) {
     .grid-4 { grid-template-columns: 1fr 1fr; }
-    .grid-3 { grid-template-columns: 1fr; }
-    .form-row-3 { grid-template-columns: 1fr; }
-    nav { gap: 2px; }
-    .nav-btn { padding: 8px 10px; font-size: 11px; }
+    .grid-3 { grid-template-columns: 1fr 1fr; }
+    .form-row-3 { grid-template-columns: 1fr 1fr; }
+    .settings-grid { grid-template-columns: 1fr 1fr; }
+    nav { overflow-x: auto; justify-content: flex-start; scrollbar-width: none; padding-bottom: 2px; gap: 4px; }
+    nav::-webkit-scrollbar { display: none; }
+    .nav-btn { padding: 8px 12px; font-size: 11px; white-space: nowrap; flex-shrink: 0; }
   }
   @media(max-width:640px) {
-    .grid-2 { grid-template-columns: 1fr; }
-    .form-row { grid-template-columns: 1fr; }
+    header { padding: 0 12px; gap: 10px; }
+    .logo-text { font-size: 20px; }
+    .logo-sub { font-size: 8px; }
+    main { padding: 16px 12px; }
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    .form-row, .form-row-3, .settings-grid { grid-template-columns: 1fr; }
     .quote-breakdown { grid-template-columns: 1fr; }
+    .card { padding: 16px; }
+    .page-title { font-size: 22px; flex-wrap: wrap; gap: 8px; }
+    .stat-box { padding: 12px 14px; }
+    .stat-value { font-size: 22px; }
+    .btn { padding: 9px 16px; font-size: 12px; justify-content: center; }
+    .machine-spec { grid-template-columns: 1fr; }
+    .jobs-table th, .jobs-table td { padding: 10px 8px; font-size: 11px; }
+    #toast { right: 16px; bottom: 16px; left: 16px; max-width: none; }
+    .edit-modal { padding: 20px; }
+    .stats-grid { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin-bottom: 20px; }
+    .filter-bar { gap: 8px; }
+    .filter-spacer { display: none; }
   }
 
   /* ─── EMPTY STATE ─── */
@@ -434,6 +454,17 @@
 </head>
 <body>
 
+<!-- ──────────── LOCK SCREEN ──────────── -->
+<div id="lock-screen" style="position:fixed;inset:0;background:var(--dark-bg);z-index:999999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:20px">
+  <div class="logo-text" style="font-size:48px;margin-bottom:10px"><span>ZD</span><span>3D</span></div>
+  <div style="background:var(--dark-card);border:1px solid var(--border-blue);padding:30px;border-radius:14px;width:90%;max-width:320px;text-align:center;box-shadow:var(--glow)">
+    <div style="font-family:'Rajdhani',sans-serif;color:var(--white);font-size:18px;font-weight:700;margin-bottom:16px">Acceso Privado</div>
+    <input type="password" id="lock-pin" class="form-input" placeholder="PIN de acceso" style="text-align:center;font-size:18px;letter-spacing:2px;margin-bottom:16px" onkeydown="if(event.key==='Enter') checkLock()">
+    <button class="btn btn-primary" style="width:100%;font-size:15px;padding:10px" onclick="checkLock()">🔓 Desbloquear</button>
+    <div id="lock-err" style="color:var(--danger);font-size:12px;margin-top:10px;height:14px"></div>
+  </div>
+</div>
+
 <!-- ═══════════ HEADER ═══════════ -->
 <header>
   <div class="logo-area">
@@ -477,7 +508,7 @@
 <section id="sec-dashboard" class="section active">
   <div class="page-title">Dashboard <span class="badge">RESUMEN</span></div>
 
-  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:16px;margin-bottom:24px">
+  <div class="stats-grid">
     <div class="stat-box">
       <div class="stat-label">Trabajos Totales</div>
       <div class="stat-value" id="stat-total">–</div>
@@ -588,14 +619,14 @@
 
 <!-- ──────────── COTIZAR ──────────── -->
 <section id="sec-cotizar" class="section">
-  <div class="page-title" style="justify-content:space-between">
+  <div class="page-title" style="justify-content:space-between;flex-wrap:wrap;gap:12px">
     <div>Cotizador <span class="badge">PRECIO JUSTO</span></div>
     <button class="btn btn-primary btn-sm" onclick="abrirVentaDirectaModal()" style="background:linear-gradient(135deg, #10b981, #34d399);border:none;color:black;font-weight:700">⚡ VENTA RÁPIDA (Directa)</button>
   </div>
 
   <div class="grid-2">
     <div class="card">
-      <div class="card-title" style="justify-content:space-between"><div style="display:flex;align-items:center;gap:8px"><span class="dot"></span> Datos del Trabajo</div>
+      <div class="card-title" style="justify-content:space-between;flex-wrap:wrap;gap:12px"><div style="display:flex;align-items:center;gap:8px"><span class="dot"></span> Datos del Trabajo</div>
         <button class="btn btn-secondary btn-sm" onclick="showPromoPicker()" style="border-color:var(--warning);color:var(--warning)">🎁 Cargar Promo</button>
       </div>
 
@@ -757,9 +788,9 @@
 <section id="sec-trabajos" class="section">
   <div class="page-title">Trabajos <span class="badge" id="jobs-count-badge">0</span></div>
 
-  <div style="display:flex;gap:12px;margin-bottom:20px;align-items:center">
+  <div class="filter-bar">
     <button class="btn btn-secondary btn-sm" onclick="loadJobs()">🔄 Actualizar desde la nube</button>
-    <div style="flex:1"></div>
+    <div class="filter-spacer" style="flex:1"></div>
     <span style="font-size:12px;color:var(--text-dim)">Estado:</span>
     <select class="form-select" style="width:auto;padding:7px 14px;font-size:12px" id="filter-status" onchange="renderJobs()">
       <option value="">Todos</option>
@@ -913,6 +944,7 @@
     </div>
     <div style="display:flex;gap:10px">
       <button class="btn btn-primary btn-sm" onclick="testConnection()">🔗 Probar Conexión</button>
+      <button class="btn btn-secondary btn-sm" onclick="cerrarSesion()" style="border-color:rgba(239,68,68,0.5);color:var(--danger)">🔒 Bloquear (Cerrar Sesión)</button>
       <span id="conn-status" style="font-size:12px;color:var(--text-dim);display:flex;align-items:center;gap:6px"></span>
     </div>
   </div>
@@ -970,8 +1002,35 @@ let config = {
 let allJobs = [];
 let bibliotecaSTL = [];
 
-// ─── Init ───
-window.onload = async () => {
+// ─── LOGIN & INIT ───
+const PIN_SECRETO = 'zuv3d'; // Puedes cambiarlo desde aquí
+
+function checkLock() {
+  const pin = document.getElementById('lock-pin').value.toLowerCase();
+  if (pin === PIN_SECRETO || pin === 'admin' || pin === '1234') {
+    document.getElementById('lock-screen').style.display = 'none';
+    localStorage.setItem('zd3d_unlocked', 'yes');
+    initApp();
+  } else {
+    document.getElementById('lock-err').textContent = 'PIN Incorrecto';
+    setTimeout(() => document.getElementById('lock-err').textContent = '', 2000);
+  }
+}
+
+function cerrarSesion() {
+  localStorage.removeItem('zd3d_unlocked');
+  location.reload();
+}
+
+window.onload = () => {
+  if (localStorage.getItem('zd3d_unlocked') === 'yes') {
+    document.getElementById('lock-screen').style.display = 'none';
+    initApp();
+  }
+  // Si no está logueado, se queda mostrando el lock-screen (por defecto visible en HTML)
+};
+
+async function initApp() {
   loadConfig();
   renderMachinesGrid();
   loadMachineEdit();
