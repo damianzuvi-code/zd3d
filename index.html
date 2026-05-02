@@ -506,6 +506,10 @@
     <button class="nav-btn" onclick="showSection('trabajos')">
       <span class="icon">≡</span> Trabajos
     </button>
+    <button class="nav-btn" onclick="showSection('trabajos'); document.getElementById('filter-status').value='Pendiente'; renderJobs();" style="padding-left:32px; font-size:12px; color:var(--warning)">
+      <span class="icon" style="font-size:14px">⏳</span> Pendientes
+      <span id="nav-badge-pend" style="background:rgba(245,158,11,0.2);color:var(--warning);padding:2px 8px;border-radius:10px;font-size:10px;margin-left:auto;font-weight:700;border:1px solid rgba(245,158,11,0.4)">0</span>
+    </button>
     <button class="nav-btn" onclick="showSection('catalogo')">
       <span class="icon">📚</span> Catálogo
     </button>
@@ -1058,6 +1062,7 @@ async function initApp() {
   loadConfig();
   renderMachinesGrid();
   loadMachineEdit();
+  if (typeof updateMachineSelects === 'function') updateMachineSelects();
 
   // Set default date to today
   const today = new Date();
@@ -1275,7 +1280,9 @@ async function cambiarPago(idx, nuevoPago) {
 function updateDashboard() {
   const jobs = allJobs;
   document.getElementById('stat-total').textContent = jobs.length;
-  document.getElementById('stat-pendientes').textContent = jobs.filter(j => j.estado === 'Pendiente').length;
+  const pendientesCount = jobs.filter(j => j.estado === 'Pendiente').length;
+  document.getElementById('stat-pendientes').textContent = pendientesCount;
+  if(document.getElementById('nav-badge-pend')) document.getElementById('nav-badge-pend').textContent = pendientesCount;
   document.getElementById('stat-imprimiendo').textContent = jobs.filter(j => j.estado === 'Imprimiendo').length;
   const total    = jobs.reduce((s,j) => s + (parseFloat(j.precio)||0), 0);
   const cobrado  = jobs.filter(j => j.pago === 'Pagado').reduce((s,j) => s + (parseFloat(j.precio)||0), 0);
@@ -2509,7 +2516,11 @@ function abrirEditar(idx) {
         </div>
         <div class="form-group">
           <label class="form-label">Máquina</label>
-          <input class="form-input" id="ej-maquina" value="${job.maquina||''}">
+          <select class="form-select" id="ej-maquina">
+            ${config.machines.map(m => `<option value="${m.name}" ${job.maquina===m.name?'selected':''}>${m.name}</option>`).join('')}
+            <option value="Sin máquina" ${job.maquina==='Sin máquina'?'selected':''}>Sin máquina</option>
+            <option value="Venta Directa" ${job.maquina==='Venta Directa'?'selected':''}>Venta Directa</option>
+          </select>
         </div>
       </div>
 
