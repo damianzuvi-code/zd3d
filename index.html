@@ -578,7 +578,9 @@
 
   <div class="grid-2">
     <div class="card">
-      <div class="card-title"><span class="dot"></span> Datos del Trabajo</div>
+      <div class="card-title" style="justify-content:space-between"><div style="display:flex;align-items:center;gap:8px"><span class="dot"></span> Datos del Trabajo</div>
+        <button class="btn btn-secondary btn-sm" onclick="showPromoPicker()" style="border-color:var(--warning);color:var(--warning)">🎁 Cargar Promo</button>
+      </div>
 
       <div class="form-row">
         <div class="form-group">
@@ -845,22 +847,25 @@ window.onload = async () => {
   if (config.scriptUrl) {
     toast('⏳', 'Sincronizando datos…');
     try {
-      // Cargar trabajos, consumibles y filamentos en paralelo
-      const [rJobs, rCons, rFil] = await Promise.all([
+      // Cargar trabajos, consumibles, filamentos y promos en paralelo
+      const [rJobs, rCons, rFil, rProm] = await Promise.all([
         fetch(`${config.scriptUrl}?action=getData`),
         fetch(`${config.scriptUrl}?action=getConsumibles`),
-        fetch(`${config.scriptUrl}?action=getFilamentos`)
+        fetch(`${config.scriptUrl}?action=getFilamentos`),
+        fetch(`${config.scriptUrl}?action=getPromos`)
       ]);
 
       const dJobs = await rJobs.json();
       const dCons = await rCons.json();
       const dFil  = await rFil.json();
+      const dProm = await rProm.json();
 
       if (dJobs?.jobs) {
         allJobs = dJobs.jobs.map(j => ({ ...j, pago: j.pago || 'Pendiente' }));
       }
       if (dCons?.consumibles) bibliotecaConsumibles = dCons.consumibles;
       if (dFil?.filamentos)   bibliotecaFilamentos  = dFil.filamentos;
+      if (dProm?.promos)      bibliotecaPromos      = dProm.promos;
 
       updateDashboard();
       renderJobs();
@@ -929,16 +934,28 @@ function renderGrafico() {
   allJobs.forEach(j => {
     const precio = parseFloat(j.precio) || 0;
     const pagado = j.pago === 'Pagado';
-    // Intentar parsear fecha
     let mes = 'Sin fecha';
     if (j.fecha) {
-      const parts = j.fecha.split('/');
-      if (parts.length >= 2) {
-        const m = parseInt(parts[1] || parts[0]);
-        const y = parts.length === 3 ? parseInt(parts[2]) : new Date().getFullYear();
-        if (!isNaN(m) && !isNaN(y)) mes = `${y}-${String(m).padStart(2,'0')}`;
+      if (j.fecha.includes('/')) {
+        const parts = j.fecha.split('/');
+        if (parts.length >= 2) {
+          const m = parseInt(parts[1] || parts[0]);
+          const y = parts.length === 3 ? parseInt(parts[2]) : new Date().getFullYear();
+          if (!isNaN(m) && !isNaN(y)) mes = `${y}-${String(m).padStart(2,'0')}`;
+        }
+      } else {
+        const d = new Date(j.fecha);
+        if (!isNaN(d.getTime())) {
+          mes = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2,'0')}`;
+        }
       }
     }
+    // Fallback: si no se pudo determinar, lo asignamos al mes actual para que no desaparezca
+    if (mes === 'Sin fecha' || mes.includes('NaN')) {
+      const d = new Date();
+      mes = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2,'0')}`;
+    }
+    
     if (!datos[mes]) datos[mes] = { total: 0, cobrado: 0 };
     datos[mes].total   += precio;
     if (pagado) datos[mes].cobrado += precio;
@@ -946,13 +963,16 @@ function renderGrafico() {
 
   // Filtrar por año seleccionado
   const yearSel = document.getElementById('graf-year');
-  const years = [...new Set(Object.keys(datos).filter(k=>k!=='Sin fecha').map(k=>k.split('-')[0]))].sort();
+  let years = [...new Set(Object.keys(datos).map(k=>k.split('-')[0]))].sort();
+  years = years.filter(y => y !== 'Sin' && y !== 'NaN' && y.length === 4);
+  if (years.length === 0) years = [new Date().getFullYear().toString()];
+  
   if (yearSel) {
     const curVal = yearSel.value;
     yearSel.innerHTML = years.map(y=>`<option value="${y}" ${y===curVal?'selected':''}>${y}</option>`).join('');
     if (!curVal && years.length) yearSel.value = years[years.length-1];
   }
-  const yearFilter = yearSel?.value || (years[years.length-1] || '');
+  const yearFilter = yearSel?.value || (years[years.length-1] || new Date().getFullYear().toString());
 
   const MESES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
   const mesesDelAnio = MESES.map((_,i) => `${yearFilter}-${String(i+1).padStart(2,'0')}`);
@@ -1122,19 +1142,23 @@ function updateMachineSelects() {
 // ─── Biblioteca de consumibles y filamentos ───
 let bibliotecaConsumibles = [];  // cargados desde Sheets
 let bibliotecaFilamentos  = [];  // cargados desde Sheets
+let bibliotecaPromos      = [];  // cargados desde Sheets
 let trabajoConsumibles    = [];  // los del trabajo actual
 
 async function cargarBibliotecas() {
   if (!config.scriptUrl) return;
   try {
-    const [rc, rf] = await Promise.all([
+    const [rc, rf, rp] = await Promise.all([
       fetch(config.scriptUrl + '?action=getConsumibles'),
-      fetch(config.scriptUrl + '?action=getFilamentos')
+      fetch(config.scriptUrl + '?action=getFilamentos'),
+      fetch(config.scriptUrl + '?action=getPromos')
     ]);
     const dc = await rc.json();
     const df = await rf.json();
+    const dp = await rp.json();
     if (dc.consumibles) bibliotecaConsumibles = dc.consumibles;
     if (df.filamentos)  bibliotecaFilamentos  = df.filamentos;
+    if (dp.promos)      bibliotecaPromos      = dp.promos;
   } catch(e) {}
 }
 
@@ -1349,6 +1373,105 @@ async function eliminarFilamentoLib(id) {
   }
   cerrarPickerFil();
   setTimeout(showFilamentoPicker, 50);
+}
+
+// ─── PICKER DE PROMOS ───
+function showPromoPicker() {
+  const existing = document.getElementById('promo-picker-modal');
+  if (existing) { existing.remove(); return; }
+
+  const modal = document.createElement('div');
+  modal.id = 'promo-picker-modal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px';
+
+  const inner = document.createElement('div');
+  inner.style.cssText = 'background:var(--dark-card);border:1px solid var(--warning);border-radius:14px;padding:24px;width:100%;max-width:480px;max-height:80vh;overflow-y:auto';
+
+  const libItems = bibliotecaPromos.length
+    ? bibliotecaPromos.map(p => `
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--dark-card2);border:1px solid var(--border);border-radius:8px;margin-bottom:6px">
+          <div>
+            <div style="font-size:13px;color:var(--white)">${p.nombre}</div>
+            <div style="font-size:11px;color:var(--text-dim)">${p.descripcion}</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-family:'Rajdhani',sans-serif;font-size:15px;color:var(--warning);font-weight:700">$${Math.round(p.precio).toLocaleString('es-AR')}</span>
+            <button onclick="usarPromo('${p.nombre.replace(/'/g,"\\'").replace(/"/g,"&quot;")}', '${p.descripcion.replace(/'/g,"\\'").replace(/"/g,"&quot;")}', ${p.precio});cerrarPickerPromo()" style="background:rgba(245,158,11,0.15);border:1px solid var(--warning);color:var(--warning);border-radius:6px;padding:5px 12px;cursor:pointer;font-size:12px">Usar</button>
+            <button onclick="eliminarPromoLib('${p.id}')" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:var(--danger);border-radius:6px;padding:5px 10px;cursor:pointer;font-size:12px">✕</button>
+          </div>
+        </div>`).join('')
+    : '<div style="font-size:12px;color:var(--text-dim);padding:10px 0">No hay promos guardadas aún.</div>';
+
+  inner.innerHTML = `
+    <div style="font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;color:var(--warning);margin-bottom:16px">🎁 Promociones</div>
+    <div style="margin-bottom:16px">${libItems}</div>
+    <div style="border-top:1px solid var(--border);padding-top:16px">
+      <div style="font-size:11px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Guardar nueva promo</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+        <input class="form-input" id="new-promo-nombre" placeholder="Nombre (Ej: Llaveros x20)" style="font-size:13px;padding:8px 12px">
+        <input class="form-input" id="new-promo-precio" type="number" placeholder="Precio ($)" style="font-size:13px;padding:8px 12px">
+      </div>
+      <input class="form-input" id="new-promo-desc" placeholder="Descripción breve" style="font-size:13px;padding:8px 12px;margin-bottom:12px;width:100%">
+      <button class="btn btn-primary btn-sm" onclick="guardarNuevaPromo()" style="width:100%;background:linear-gradient(135deg, #d97706, #f59e0b)">💾 Guardar promo y usar</button>
+    </div>
+    <button onclick="cerrarPickerPromo()" style="margin-top:16px;width:100%;padding:8px;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:8px;color:var(--text-dim);cursor:pointer;font-size:13px">Cerrar</button>
+  `;
+
+  modal.appendChild(inner);
+  modal.addEventListener('click', e => { if (e.target === modal) cerrarPickerPromo(); });
+  document.body.appendChild(modal);
+}
+
+function cerrarPickerPromo() {
+  const m = document.getElementById('promo-picker-modal');
+  if (m) m.remove();
+}
+
+function usarPromo(nombre, desc, precio) {
+  document.getElementById('q-stl').value = nombre + (desc ? ' - ' + desc : '');
+  document.getElementById('q-gramos').value = 0;
+  document.getElementById('q-horas').value = 0;
+  setMargenMode('ars');
+  document.getElementById('q-margen').value = precio;
+  trabajoConsumibles = [];
+  renderConsumiblesDelTrabajo();
+  calcQuote();
+  toast('🎁', 'Promo aplicada al cotizador');
+}
+
+async function guardarNuevaPromo() {
+  const nombre = document.getElementById('new-promo-nombre').value.trim();
+  const desc   = document.getElementById('new-promo-desc').value.trim();
+  const precio = parseFloat(document.getElementById('new-promo-precio').value) || 0;
+  if (!nombre || !precio) { toast('⚠️', 'Completá nombre y precio'); return; }
+  
+  const id = Date.now()+'';
+  const promo = { id, nombre, descripcion: desc, precio };
+  bibliotecaPromos.push(promo);
+  
+  if (config.scriptUrl) {
+    fetch(config.scriptUrl, {
+      method: 'POST', mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'savePromo', ...promo })
+    });
+  }
+  
+  usarPromo(nombre, desc, precio);
+  cerrarPickerPromo();
+}
+
+async function eliminarPromoLib(id) {
+  bibliotecaPromos = bibliotecaPromos.filter(p => p.id !== id);
+  if (config.scriptUrl) {
+    fetch(config.scriptUrl, {
+      method: 'POST', mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'deletePromo', id })
+    });
+  }
+  cerrarPickerPromo();
+  setTimeout(showPromoPicker, 50);
 }
 
 // ─── Modo margen ───
@@ -1635,6 +1758,17 @@ function abrirEditar(idx) {
 
       <div class="form-row" style="margin-bottom:14px">
         <div class="form-group">
+          <label class="form-label">Fecha</label>
+          <input class="form-input" id="ej-fecha" value="${job.fecha||''}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Máquina</label>
+          <input class="form-input" id="ej-maquina" value="${job.maquina||''}">
+        </div>
+      </div>
+
+      <div class="form-row" style="margin-bottom:14px">
+        <div class="form-group">
           <label class="form-label">Gramos (g)</label>
           <input class="form-input" id="ej-gramos" type="number" value="${job.gramos||''}">
         </div>
@@ -1646,14 +1780,20 @@ function abrirEditar(idx) {
 
       <div class="form-row" style="margin-bottom:14px">
         <div class="form-group">
+          <label class="form-label">Consumibles / Extras</label>
+          <input class="form-input" id="ej-consumibles" value="${job.consumibles||''}" placeholder="Ej: Vaso, Llavero">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Margen</label>
+          <input class="form-input" id="ej-margen" value="${job.margen||''}" placeholder="Ej: $5000 o 50%">
+        </div>
+      </div>
+
+      <div class="form-row" style="margin-bottom:14px">
+        <div class="form-group">
           <label class="form-label">Precio Final ($)</label>
           <input class="form-input" id="ej-precio" type="number" value="${job.precio||''}">
         </div>
-        <div class="form-group">
-          <label class="form-label">Máquina</label>
-          <input class="form-input" id="ej-maquina" value="${job.maquina||''}">
-        </div>
-      </div>
 
       <div class="form-row" style="margin-bottom:14px">
         <div class="form-group">
@@ -1700,6 +1840,7 @@ async function guardarEdicion(fechaOrig, clienteOrig, stlOrig) {
 
   allJobs[idx] = {
     ...allJobs[idx],
+    fecha:         document.getElementById('ej-fecha').value.trim(),
     cliente:       document.getElementById('ej-cliente').value.trim(),
     stl:           document.getElementById('ej-stl').value.trim(),
     gramos:        document.getElementById('ej-gramos').value,
@@ -1708,6 +1849,8 @@ async function guardarEdicion(fechaOrig, clienteOrig, stlOrig) {
     maquina:       document.getElementById('ej-maquina').value.trim(),
     estado:        document.getElementById('ej-estado').value,
     pago:          document.getElementById('ej-pago').value,
+    consumibles:   document.getElementById('ej-consumibles').value.trim(),
+    margen:        document.getElementById('ej-margen').value.trim(),
     observaciones: document.getElementById('ej-obs').value.trim(),
   };
 
