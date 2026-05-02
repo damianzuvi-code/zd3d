@@ -714,7 +714,7 @@
             </span>
           </label>
           <div style="display:flex;gap:8px;align-items:center">
-            <input class="form-input" id="q-margen" type="number" placeholder="0" oninput="calcQuote()" style="flex:1">
+            <input class="form-input" id="q-margen" type="number" placeholder="100" value="100" oninput="calcQuote()" style="flex:1">
             <span id="margen-preview" style="font-size:12px;color:var(--blue-bright);white-space:nowrap;min-width:64px;text-align:right"></span>
           </div>
         </div>
@@ -1396,6 +1396,14 @@ async function cargarBibliotecas() {
     if (dc.consumibles) bibliotecaConsumibles = dc.consumibles;
     if (df.filamentos)  bibliotecaFilamentos  = df.filamentos;
     if (dp.promos)      bibliotecaPromos      = dp.promos;
+
+    // Cargar PLA por defecto en Cotizador si está vacío
+    const pla = bibliotecaFilamentos.find(f => f.tipo.toLowerCase().includes('pla'));
+    if (pla && !document.getElementById('q-rollo').value) {
+      document.getElementById('q-rollo').value = pla.precio;
+      if (config.rolloG !== pla.peso) { config.rolloG = pla.peso; saveConfig(); }
+      calcQuote();
+    }
   } catch(e) {}
 }
 
@@ -2066,12 +2074,20 @@ function limpiarCotizador() {
   document.getElementById('q-stl').value = '';
   document.getElementById('q-gramos').value = '';
   document.getElementById('q-horas').value = '';
-  document.getElementById('q-rollo').value = '';
+  
+  const pla = bibliotecaFilamentos.find(f => f.tipo.toLowerCase().includes('pla'));
+  document.getElementById('q-rollo').value = pla ? pla.precio : '';
+  
+  document.getElementById('q-margen').value = '100';
+  setMargenMode('pct');
+  
   document.getElementById('q-adelanto').value = '';
   trabajoConsumibles = [];
-  renderTrabajoConsumibles();
+  if (typeof renderConsumiblesDelTrabajo === 'function') renderConsumiblesDelTrabajo();
+  else if (typeof renderTrabajoConsumibles === 'function') renderTrabajoConsumibles();
+  
   calcQuote();
-  toast('🗑️', 'Cotizador limpio');
+  toast('🗑️', 'Cotizador limpio (Valores por defecto aplicados)');
 }
 
 async function guardarNuevoSTL() {
