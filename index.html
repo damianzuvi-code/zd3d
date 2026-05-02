@@ -401,6 +401,21 @@
   .empty-state p { font-size: 14px; }
 
   /* ─── TAG ─── */
+  .edit-modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+    z-index: 600; display: flex; align-items: center; justify-content: center; padding: 20px;
+  }
+  .edit-modal {
+    background: var(--dark-card); border: 1px solid var(--border-blue);
+    border-radius: 14px; padding: 28px; width: 100%; max-width: 520px;
+    max-height: 90vh; overflow-y: auto;
+  }
+  .edit-modal-title {
+    font-family: 'Rajdhani', sans-serif; font-size: 20px; font-weight: 700;
+    color: var(--white); margin-bottom: 20px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+
   .tag {
     display: inline-block; font-size: 10px;
     background: rgba(26,159,212,0.1); color: var(--blue-bright);
@@ -729,7 +744,8 @@
             <th>Estado</th>
             <th>Precio</th>
             <th>Pago</th>
-            <th>Acción</th>
+            <th>Editar</th>
+            <th>Estado</th>
           </tr>
         </thead>
         <tbody id="jobs-tbody">
@@ -813,12 +829,50 @@ let config = {
 let allJobs = [];
 
 // ─── Init ───
-window.onload = () => {
+window.onload = async () => {
   loadConfig();
   renderMachinesGrid();
   loadMachineEdit();
-  updateDashboard();
-  cargarBibliotecas();
+
+  // Poblar selector de año con año actual
+  const yearSel = document.getElementById('graf-year');
+  if (yearSel) {
+    const y = new Date().getFullYear();
+    yearSel.innerHTML = `<option value="${y}">${y}</option><option value="${y-1}">${y-1}</option>`;
+  }
+
+  // Cargar todo desde Sheets al abrir
+  if (config.scriptUrl) {
+    toast('⏳', 'Sincronizando datos…');
+    try {
+      // Cargar trabajos, consumibles y filamentos en paralelo
+      const [rJobs, rCons, rFil] = await Promise.all([
+        fetch(`${config.scriptUrl}?action=getData`),
+        fetch(`${config.scriptUrl}?action=getConsumibles`),
+        fetch(`${config.scriptUrl}?action=getFilamentos`)
+      ]);
+
+      const dJobs = await rJobs.json();
+      const dCons = await rCons.json();
+      const dFil  = await rFil.json();
+
+      if (dJobs?.jobs) {
+        allJobs = dJobs.jobs.map(j => ({ ...j, pago: j.pago || 'Pendiente' }));
+      }
+      if (dCons?.consumibles) bibliotecaConsumibles = dCons.consumibles;
+      if (dFil?.filamentos)   bibliotecaFilamentos  = dFil.filamentos;
+
+      updateDashboard();
+      renderJobs();
+      toast('✅', `Datos cargados — ${allJobs.length} trabajo(s)`);
+    } catch(e) {
+      updateDashboard();
+      toast('⚠️', 'Sin conexión — mostrando datos locales');
+    }
+  } else {
+    updateDashboard();
+    toast('⚠️', 'Configurá la URL de Apps Script en Config');
+  }
 };
 
 // ─── Navegación ───
@@ -1463,6 +1517,7 @@ async function saveJob() {
 // ─── Cargar trabajos ───
 async function loadJobs() {
   if (!config.scriptUrl) {
+    updateDashboard();
     renderJobs();
     toast('⚠️', 'Configure la URL de Apps Script para cargar desde la nube');
     return;
@@ -1512,6 +1567,9 @@ function renderJobs() {
         }
       </td>
       <td>
+        <button onclick="abrirEditar(${idx})" style="background:rgba(26,159,212,0.1);border:1px solid var(--border-blue);color:var(--blue-bright);border-radius:6px;padding:4px 10px;cursor:pointer;font-size:11px;font-family:'Exo 2',sans-serif">✏ Editar</button>
+      </td>
+      <td>
         ${j.estado === 'Listo' 
           ? '<span style="font-size:11px;color:var(--success)">✓ Listo</span>'
           : `<select onchange="cambiarEstado(${idx}, this.value)" style="background:var(--dark-card2);border:1px solid var(--border-blue);color:var(--text);border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer;font-family:'Exo 2',sans-serif">
@@ -1539,6 +1597,131 @@ async function testConnection() {
     saveConfig();
   } catch {
     el.innerHTML = '❌ <span style="color:var(--danger)">Sin respuesta</span>';
+  }
+}
+
+// ─── Edición de trabajos ───
+function abrirEditar(idx) {
+  const filterStatus = document.getElementById('filter-status')?.value || '';
+  const filterPago2  = document.getElementById('filter-pago')?.value   || '';
+  let jobsDisplay = filterStatus ? allJobs.filter(j => j.estado === filterStatus) : allJobs;
+  jobsDisplay = filterPago2 ? jobsDisplay.filter(j => (j.pago||'Pendiente') === filterPago2) : jobsDisplay;
+  const job = [...jobsDisplay].reverse()[idx];
+  if (!job) return;
+
+  // Remover modal anterior si existe
+  document.getElementById('edit-job-modal')?.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'edit-job-modal';
+  overlay.className = 'edit-modal-overlay';
+  overlay.innerHTML = `
+    <div class="edit-modal">
+      <div class="edit-modal-title">
+        ✏ Editar Trabajo
+        <button onclick="cerrarEditar()" style="background:rgba(255,255,255,0.05);border:1px solid var(--border);color:var(--text-dim);border-radius:6px;padding:4px 12px;cursor:pointer;font-size:13px">✕ Cerrar</button>
+      </div>
+
+      <div class="form-row" style="margin-bottom:14px">
+        <div class="form-group">
+          <label class="form-label">Cliente</label>
+          <input class="form-input" id="ej-cliente" value="${job.cliente||''}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Archivo STL</label>
+          <input class="form-input" id="ej-stl" value="${job.stl||''}">
+        </div>
+      </div>
+
+      <div class="form-row" style="margin-bottom:14px">
+        <div class="form-group">
+          <label class="form-label">Gramos (g)</label>
+          <input class="form-input" id="ej-gramos" type="number" value="${job.gramos||''}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Horas</label>
+          <input class="form-input" id="ej-horas" type="number" value="${job.horas||''}">
+        </div>
+      </div>
+
+      <div class="form-row" style="margin-bottom:14px">
+        <div class="form-group">
+          <label class="form-label">Precio Final ($)</label>
+          <input class="form-input" id="ej-precio" type="number" value="${job.precio||''}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Máquina</label>
+          <input class="form-input" id="ej-maquina" value="${job.maquina||''}">
+        </div>
+      </div>
+
+      <div class="form-row" style="margin-bottom:14px">
+        <div class="form-group">
+          <label class="form-label">Estado</label>
+          <select class="form-select" id="ej-estado">
+            <option value="Pendiente"   ${job.estado==='Pendiente'   ?'selected':''}>Pendiente</option>
+            <option value="Imprimiendo" ${job.estado==='Imprimiendo' ?'selected':''}>Imprimiendo</option>
+            <option value="Listo"       ${job.estado==='Listo'       ?'selected':''}>Listo</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Pago</label>
+          <select class="form-select" id="ej-pago">
+            <option value="Pendiente" ${(job.pago||'Pendiente')==='Pendiente'?'selected':''}>⏳ Pendiente de cobro</option>
+            <option value="Pagado"    ${job.pago==='Pagado'           ?'selected':''}>💵 Pagado</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-bottom:20px">
+        <label class="form-label">Observaciones</label>
+        <input class="form-input" id="ej-obs" value="${job.observaciones||''}" placeholder="Notas del trabajo...">
+      </div>
+
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-primary" style="flex:1" onclick="guardarEdicion('${job.fecha}','${job.cliente}','${job.stl}')">
+          💾 Guardar Cambios
+        </button>
+        <button class="btn btn-secondary" onclick="cerrarEditar()">Cancelar</button>
+      </div>
+    </div>`;
+
+  overlay.addEventListener('click', e => { if (e.target === overlay) cerrarEditar(); });
+  document.body.appendChild(overlay);
+}
+
+function cerrarEditar() {
+  document.getElementById('edit-job-modal')?.remove();
+}
+
+async function guardarEdicion(fechaOrig, clienteOrig, stlOrig) {
+  const idx = allJobs.findIndex(j => j.fecha === fechaOrig && j.cliente === clienteOrig && j.stl === stlOrig);
+  if (idx === -1) { toast('❌', 'Trabajo no encontrado'); return; }
+
+  allJobs[idx] = {
+    ...allJobs[idx],
+    cliente:       document.getElementById('ej-cliente').value.trim(),
+    stl:           document.getElementById('ej-stl').value.trim(),
+    gramos:        document.getElementById('ej-gramos').value,
+    horas:         document.getElementById('ej-horas').value,
+    precio:        document.getElementById('ej-precio').value,
+    maquina:       document.getElementById('ej-maquina').value.trim(),
+    estado:        document.getElementById('ej-estado').value,
+    pago:          document.getElementById('ej-pago').value,
+    observaciones: document.getElementById('ej-obs').value.trim(),
+  };
+
+  cerrarEditar();
+  updateDashboard();
+  renderJobs();
+  toast('✅', 'Trabajo actualizado');
+
+  if (config.scriptUrl) {
+    fetch(config.scriptUrl, {
+      method: 'POST', mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'editarTrabajo', fechaOrig, clienteOrig, stlOrig, ...allJobs[idx] })
+    }).catch(()=>{});
   }
 }
 
