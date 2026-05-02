@@ -36,6 +36,7 @@
     overflow-x: hidden;
   }
 
+  /* Animated grid background */
   body::before {
     content: '';
     position: fixed;
@@ -48,6 +49,7 @@
     z-index: 0;
   }
 
+  /* ─── HEADER ─── */
   header {
     position: sticky; top: 0; z-index: 100;
     background: rgba(10,12,16,0.92);
@@ -58,7 +60,995 @@
     height: 64px;
     box-shadow: 0 4px 30px rgba(0,0,0,0.6);
   }
+
+  .logo-area {
+    display: flex; align-items: center; gap: 12px;
+    flex-shrink: 0;
+  }
+
+  .logo-text {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 26px; font-weight: 700;
+    letter-spacing: 2px;
+  }
+  .logo-text span:first-child { color: var(--white); }
+  .logo-text span:last-child { color: var(--blue-bright); }
+
+  .logo-sub {
+    font-size: 10px; color: var(--text-dim);
+    letter-spacing: 1.5px; text-transform: uppercase;
+    display: block; margin-top: -4px;
+  }
+
+  nav {
+    display: flex; gap: 4px; flex: 1; justify-content: center;
+  }
+
+  .nav-btn {
+    background: none; border: none; cursor: pointer;
+    font-family: 'Exo 2', sans-serif;
+    color: var(--text-dim); font-size: 13px; font-weight: 500;
+    padding: 8px 16px; border-radius: 6px;
+    display: flex; align-items: center; gap: 7px;
+    transition: all .2s; letter-spacing: .5px;
+    text-transform: uppercase;
+  }
+  .nav-btn:hover { color: var(--blue-bright); background: rgba(26,159,212,0.08); }
+  .nav-btn.active {
+    color: var(--blue-bright);
+    background: rgba(26,159,212,0.12);
+    border: 1px solid rgba(26,159,212,0.25);
+    box-shadow: var(--glow);
+  }
+  .nav-btn .icon { font-size: 15px; }
+
+  .status-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--success); margin-left: auto;
+    box-shadow: 0 0 8px var(--success);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+  /* ─── MAIN ─── */
+  main {
+    position: relative; z-index: 1;
+    max-width: 1280px; margin: 0 auto;
+    padding: 28px 24px;
+  }
+
+  .section { display: none; }
+  .section.active { display: block; animation: fadeIn .3s ease; }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
+
+  /* ─── PAGE TITLE ─── */
+  .page-title {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 28px; font-weight: 700;
+    color: var(--white); letter-spacing: 1px;
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 24px;
+  }
+  .page-title::after {
+    content: ''; flex: 1; height: 1px;
+    background: linear-gradient(90deg, var(--border-blue), transparent);
+  }
+  .page-title .badge {
+    font-size: 11px; background: rgba(26,159,212,0.15);
+    border: 1px solid var(--border-blue); color: var(--blue-bright);
+    padding: 3px 10px; border-radius: 20px; letter-spacing: 1px;
+    font-family: 'Exo 2', sans-serif; font-weight: 500;
+  }
+
+  /* ─── CARDS ─── */
+  .card {
+    background: var(--dark-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+  .card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--blue-dark), transparent);
+  }
+
+  .card-title {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 16px; font-weight: 600;
+    color: var(--white); letter-spacing: .8px;
+    text-transform: uppercase;
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 20px;
+  }
+  .card-title .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--blue); }
+
+  /* ─── GRID LAYOUTS ─── */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+
+  /* ─── STAT BOXES ─── */
+  .stat-box {
+    background: var(--dark-card2);
+    border: 1px solid var(--border);
+    border-radius: 10px; padding: 18px 20px;
+    position: relative; overflow: hidden;
+  }
+  .stat-box::after {
+    content: '';
+    position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, var(--blue-dark), var(--blue-bright), var(--blue-dark));
+  }
+  .stat-label { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+  .stat-value { font-family: 'Rajdhani', sans-serif; font-size: 28px; font-weight: 700; color: var(--blue-bright); }
+  .stat-sub { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+
+  /* ─── FORMS ─── */
+  .form-group { margin-bottom: 16px; }
+  .form-label {
+    display: block; font-size: 11px; font-weight: 600;
+    color: var(--text-dim); text-transform: uppercase;
+    letter-spacing: 1px; margin-bottom: 7px;
+  }
+  .form-input, .form-select {
+    width: 100%;
+    background: rgba(0,0,0,0.4);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--white);
+    font-family: 'Exo 2', sans-serif;
+    font-size: 14px;
+    padding: 11px 14px;
+    transition: all .2s;
+    outline: none;
+  }
+  .form-input:focus, .form-select:focus {
+    border-color: var(--blue);
+    box-shadow: 0 0 0 3px rgba(26,159,212,0.12), var(--glow);
+    background: rgba(26,159,212,0.04);
+  }
+  .form-select option { background: var(--dark-card); }
+
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+
+  /* ─── BUTTONS ─── */
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 11px 22px; border-radius: 8px;
+    font-family: 'Exo 2', sans-serif; font-size: 13px; font-weight: 600;
+    letter-spacing: .5px; text-transform: uppercase;
+    cursor: pointer; border: none; transition: all .2s;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--blue-dark), var(--blue));
+    color: white; box-shadow: 0 4px 15px rgba(26,159,212,0.3);
+  }
+  .btn-primary:hover {
+    background: linear-gradient(135deg, var(--blue), var(--blue-bright));
+    box-shadow: var(--glow-strong), 0 4px 20px rgba(26,159,212,0.4);
+    transform: translateY(-1px);
+  }
+  .btn-secondary {
+    background: rgba(255,255,255,0.05); color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:hover { background: rgba(255,255,255,0.1); border-color: var(--silver); }
+  .btn-success { background: linear-gradient(135deg,#16a34a,#22c55e); color: white; }
+  .btn-sm { padding: 7px 14px; font-size: 11px; }
+
+  /* ─── MACHINE CARDS ─── */
+  .machine-card {
+    background: var(--dark-card2);
+    border: 1px solid var(--border);
+    border-radius: 12px; padding: 20px;
+    position: relative; overflow: hidden;
+    transition: all .3s;
+  }
+  .machine-card:hover { border-color: var(--border-blue); box-shadow: var(--glow); }
+  .machine-card.active-machine { border-color: var(--blue); box-shadow: var(--glow); }
+  .machine-card.active-machine::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, var(--blue-dark), var(--blue-bright), var(--blue-dark));
+  }
+
+  .machine-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .machine-name {
+    font-family: 'Rajdhani', sans-serif; font-size: 18px;
+    font-weight: 700; color: var(--white);
+  }
+  .machine-status {
+    font-size: 10px; padding: 3px 10px; border-radius: 20px;
+    text-transform: uppercase; letter-spacing: 1px; font-weight: 600;
+  }
+  .status-idle { background: rgba(34,197,94,0.15); color: var(--success); border: 1px solid rgba(34,197,94,0.3); }
+  .status-printing { background: rgba(245,158,11,0.15); color: var(--warning); border: 1px solid rgba(245,158,11,0.3); animation: blink 1.5s infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.6} }
+  .status-offline { background: rgba(239,68,68,0.15); color: var(--danger); border: 1px solid rgba(239,68,68,0.3); }
+
+  .machine-spec {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+    margin-bottom: 16px;
+  }
+  .spec-item { background: rgba(0,0,0,0.3); border-radius: 6px; padding: 10px; }
+  .spec-label { font-size: 9px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; }
+  .spec-value { font-family: 'Rajdhani', sans-serif; font-size: 16px; color: var(--blue-bright); font-weight: 600; }
+
+  /* ─── QUOTE RESULT ─── */
+  .quote-result {
+    background: linear-gradient(135deg, rgba(26,159,212,0.08), rgba(26,159,212,0.02));
+    border: 1px solid var(--border-blue);
+    border-radius: 12px; padding: 24px;
+    display: none;
+  }
+  .quote-result.show { display: block; animation: fadeIn .3s ease; }
+  .quote-breakdown { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+  .breakdown-item {
+    background: rgba(0,0,0,0.3); border-radius: 8px;
+    padding: 14px; display: flex; justify-content: space-between; align-items: center;
+  }
+  .breakdown-label { font-size: 12px; color: var(--text-dim); }
+  .breakdown-value { font-family: 'Rajdhani', sans-serif; font-size: 18px; color: var(--white); font-weight: 600; }
+  .quote-total {
+    border-top: 1px solid var(--border-blue); padding-top: 16px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .total-label { font-size: 14px; color: var(--text); text-transform: uppercase; letter-spacing: 1px; }
+  .total-value { font-family: 'Rajdhani', sans-serif; font-size: 36px; font-weight: 700; color: var(--blue-bright); }
+
+  /* ─── JOBS TABLE ─── */
+  .jobs-table {
+    width: 100%; border-collapse: collapse;
+    font-size: 13px;
+  }
+  .jobs-table th {
+    background: rgba(26,159,212,0.08);
+    border-bottom: 1px solid var(--border-blue);
+    color: var(--text-dim); font-size: 10px;
+    text-transform: uppercase; letter-spacing: 1.5px;
+    padding: 12px 16px; text-align: left; font-weight: 600;
+  }
+  .jobs-table td {
+    padding: 14px 16px; border-bottom: 1px solid rgba(30,42,58,0.5);
+    color: var(--text); transition: background .15s;
+  }
+  .jobs-table tr:hover td { background: rgba(26,159,212,0.04); }
+  .jobs-table tr:last-child td { border-bottom: none; }
+
+  .job-status {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 10px; padding: 4px 10px; border-radius: 20px;
+    text-transform: uppercase; letter-spacing: .8px; font-weight: 600;
+  }
+  .job-status::before { content: ''; width: 5px; height: 5px; border-radius: 50%; }
+  .job-status.pendiente { background: rgba(245,158,11,0.15); color: var(--warning); border: 1px solid rgba(245,158,11,0.3); }
+  .job-status.pendiente::before { background: var(--warning); }
+  .job-status.imprimiendo { background: rgba(26,159,212,0.15); color: var(--blue-bright); border: 1px solid rgba(26,159,212,0.3); animation: blink 1.5s infinite; }
+  .job-status.imprimiendo::before { background: var(--blue-bright); }
+  .job-status.listo { background: rgba(34,197,94,0.15); color: var(--success); border: 1px solid rgba(34,197,94,0.3); }
+  .job-status.listo::before { background: var(--success); }
+
+  /* ─── SETTINGS ─── */
+  .settings-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+
+  /* ─── TOAST ─── */
+  #toast {
+    position: fixed; bottom: 28px; right: 28px; z-index: 999;
+    background: var(--dark-card);
+    border: 1px solid var(--border-blue);
+    border-radius: 10px; padding: 14px 20px;
+    display: flex; align-items: center; gap: 12px;
+    box-shadow: var(--glow), 0 8px 32px rgba(0,0,0,0.5);
+    transform: translateY(80px); opacity: 0;
+    transition: all .35s cubic-bezier(.34,1.56,.64,1);
+    max-width: 340px;
+  }
+  #toast.show { transform: translateY(0); opacity: 1; }
+  .toast-icon { font-size: 20px; }
+  .toast-msg { font-size: 13px; color: var(--white); }
+
+  /* ─── LOADER ─── */
+  .loader {
+    display: inline-block; width: 16px; height: 16px;
+    border: 2px solid rgba(26,159,212,0.2);
+    border-top-color: var(--blue-bright);
+    border-radius: 50%; animation: spin .8s linear infinite;
+  }
+  @keyframes spin { to{transform:rotate(360deg)} }
+
+  /* ─── DIVIDER ─── */
+  .divider {
+    height: 1px; background: var(--border);
+    margin: 24px 0;
+  }
+
+  /* ─── CONFIG BANNER ─── */
+  .config-banner {
+    background: rgba(245,158,11,0.08);
+    border: 1px solid rgba(245,158,11,0.25);
+    border-radius: 8px; padding: 14px 18px;
+    display: flex; align-items: center; gap: 10px;
+    font-size: 13px; color: #fbbf24; margin-bottom: 20px;
+  }
+
+  /* ─── RESPONSIVE ─── */
+  @media(max-width:900px) {
+    .grid-4 { grid-template-columns: 1fr 1fr; }
+    .grid-3 { grid-template-columns: 1fr; }
+    .form-row-3 { grid-template-columns: 1fr; }
+    nav { gap: 2px; }
+    .nav-btn { padding: 8px 10px; font-size: 11px; }
+  }
+  @media(max-width:640px) {
+    .grid-2 { grid-template-columns: 1fr; }
+    .form-row { grid-template-columns: 1fr; }
+    .quote-breakdown { grid-template-columns: 1fr; }
+  }
+
+  /* ─── EMPTY STATE ─── */
+  .empty-state {
+    text-align: center; padding: 60px 20px;
+    color: var(--text-dim);
+  }
+  .empty-state .empty-icon { font-size: 48px; margin-bottom: 12px; opacity: .4; }
+  .empty-state p { font-size: 14px; }
+
+  /* ─── TAG ─── */
+  .tag {
+    display: inline-block; font-size: 10px;
+    background: rgba(26,159,212,0.1); color: var(--blue-bright);
+    border: 1px solid rgba(26,159,212,0.2);
+    padding: 2px 8px; border-radius: 4px; letter-spacing: .5px;
+  }
 </style>
 </head>
-<body><p>Placeholder</p></body>
+<body>
+
+<!-- ═══════════ HEADER ═══════════ -->
+<header>
+  <div class="logo-area">
+    <div>
+      <div class="logo-text"><span>ZD</span><span>3D</span></div>
+      <span class="logo-sub">Soluciones 3D, sin vueltas</span>
+    </div>
+  </div>
+
+  <nav>
+    <button class="nav-btn active" onclick="showSection('dashboard')">
+      <span class="icon">⬡</span> Dashboard
+    </button>
+    <button class="nav-btn" onclick="showSection('maquinas')">
+      <span class="icon">⚙</span> Máquinas
+    </button>
+    <button class="nav-btn" onclick="showSection('cotizar')">
+      <span class="icon">◈</span> Cotizar
+    </button>
+    <button class="nav-btn" onclick="showSection('trabajos')">
+      <span class="icon">≡</span> Trabajos
+    </button>
+    <button class="nav-btn" onclick="showSection('config')">
+      <span class="icon">✦</span> Config
+    </button>
+  </nav>
+
+  <div class="status-dot" title="Sistema activo"></div>
+</header>
+
+<!-- ═══════════ MAIN ═══════════ -->
+<main>
+
+<!-- ──────────── DASHBOARD ──────────── -->
+<section id="sec-dashboard" class="section active">
+  <div class="page-title">Dashboard <span class="badge">RESUMEN</span></div>
+
+  <div class="grid-4" style="margin-bottom:24px">
+    <div class="stat-box">
+      <div class="stat-label">Trabajos Totales</div>
+      <div class="stat-value" id="stat-total">–</div>
+      <div class="stat-sub">registrados</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-label">Pendientes</div>
+      <div class="stat-value" id="stat-pendientes" style="color:var(--warning)">–</div>
+      <div class="stat-sub">en espera</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-label">Imprimiendo</div>
+      <div class="stat-value" id="stat-imprimiendo" style="color:var(--blue-bright)">–</div>
+      <div class="stat-sub">en proceso</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-label">Facturado</div>
+      <div class="stat-value" id="stat-facturado">–</div>
+      <div class="stat-sub">total histórico</div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title"><span class="dot"></span> Estado de Máquinas</div>
+      <div id="dash-machines">
+        <div class="empty-state"><div class="empty-icon">⚙</div><p>Configure sus máquinas en la pestaña Máquinas</p></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="dot"></span> Últimos Trabajos</div>
+      <div id="dash-jobs" style="overflow-x:auto">
+        <div class="empty-state"><div class="empty-icon">📋</div><p>No hay trabajos registrados</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ──────────── MÁQUINAS ──────────── -->
+<section id="sec-maquinas" class="section">
+  <div class="page-title">Máquinas <span class="badge">2 IMPRESORAS</span></div>
+
+  <div class="grid-2" id="machines-grid">
+    <!-- generado por JS -->
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="card">
+    <div class="card-title"><span class="dot"></span> Editar Configuración de Máquina</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Máquina</label>
+        <select class="form-select" id="edit-machine-select" onchange="loadMachineEdit()">
+          <option value="0">Máquina 1</option>
+          <option value="1">Máquina 2</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Nombre</label>
+        <input class="form-input" id="edit-name" placeholder="Ej: Ender 3 Pro">
+      </div>
+    </div>
+    <div class="form-row-3">
+      <div class="form-group">
+        <label class="form-label">Costo de Compra ($)</label>
+        <input class="form-input" id="edit-cost" type="number" placeholder="Ej: 300000">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Vida Útil (horas)</label>
+        <input class="form-input" id="edit-life" type="number" placeholder="Ej: 5000">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Consumo (Watts)</label>
+        <input class="form-input" id="edit-watts" type="number" placeholder="Ej: 350">
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center">
+      <button class="btn btn-primary" onclick="saveMachine()">💾 Guardar Máquina</button>
+      <span id="machine-save-msg" style="font-size:12px;color:var(--success)"></span>
+    </div>
+  </div>
+</section>
+
+<!-- ──────────── COTIZAR ──────────── -->
+<section id="sec-cotizar" class="section">
+  <div class="page-title">Cotizador <span class="badge">PRECIO JUSTO</span></div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title"><span class="dot"></span> Datos del Trabajo</div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Cliente</label>
+          <input class="form-input" id="q-cliente" placeholder="Nombre del cliente">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Archivo STL</label>
+          <input class="form-input" id="q-stl" placeholder="Nombre del archivo">
+        </div>
+      </div>
+
+      <div class="form-row-3">
+        <div class="form-group">
+          <label class="form-label">Gramos (g)</label>
+          <input class="form-input" id="q-gramos" type="number" placeholder="0" oninput="calcQuote()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tiempo (horas)</label>
+          <input class="form-input" id="q-horas" type="number" placeholder="0" oninput="calcQuote()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Precio Rollo ($)</label>
+          <input class="form-input" id="q-rollo" type="number" placeholder="0" oninput="calcQuote()">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Máquina</label>
+          <select class="form-select" id="q-maquina" onchange="calcQuote()">
+            <option value="0">Máquina 1</option>
+            <option value="1">Máquina 2</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Margen de Ganancia ($)</label>
+          <input class="form-input" id="q-margen" type="number" placeholder="0" oninput="calcQuote()">
+        </div>
+      </div>
+
+      <button class="btn btn-primary" style="width:100%" onclick="saveJob()">
+        📤 Guardar Trabajo en la Nube
+      </button>
+    </div>
+
+    <div>
+      <div class="quote-result show" id="quote-result">
+        <div class="card-title" style="margin-bottom:16px"><span class="dot"></span> Desglose del Precio</div>
+        <div class="quote-breakdown">
+          <div class="breakdown-item">
+            <div>
+              <div class="breakdown-label">🎞 Filamento</div>
+              <div style="font-size:10px;color:var(--text-dim)" id="q-detail-fil">–</div>
+            </div>
+            <div class="breakdown-value" id="qr-filamento">$0</div>
+          </div>
+          <div class="breakdown-item">
+            <div>
+              <div class="breakdown-label">⚙ Amortización</div>
+              <div style="font-size:10px;color:var(--text-dim)" id="q-detail-amor">–</div>
+            </div>
+            <div class="breakdown-value" id="qr-amort">$0</div>
+          </div>
+          <div class="breakdown-item">
+            <div>
+              <div class="breakdown-label">⚡ Energía</div>
+              <div style="font-size:10px;color:var(--text-dim)" id="q-detail-ener">–</div>
+            </div>
+            <div class="breakdown-value" id="qr-energia">$0</div>
+          </div>
+          <div class="breakdown-item">
+            <div>
+              <div class="breakdown-label">💰 Margen</div>
+              <div style="font-size:10px;color:var(--text-dim)">ganancia directa</div>
+            </div>
+            <div class="breakdown-value" id="qr-margen">$0</div>
+          </div>
+        </div>
+        <div class="quote-total">
+          <div class="total-label">💎 Precio Final</div>
+          <div class="total-value" id="qr-total">$0</div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:16px">
+        <div class="card-title" style="margin-bottom:12px"><span class="dot"></span> Parámetros Globales</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Costo kWh ($)</label>
+            <input class="form-input" id="cfg-kwh" type="number" placeholder="Ej: 120" oninput="saveConfig();calcQuote()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Peso rollo (g)</label>
+            <input class="form-input" id="cfg-rollo-g" type="number" placeholder="Ej: 1000" oninput="saveConfig();calcQuote()">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ──────────── TRABAJOS ──────────── -->
+<section id="sec-trabajos" class="section">
+  <div class="page-title">Trabajos <span class="badge" id="jobs-count-badge">0</span></div>
+
+  <div style="display:flex;gap:12px;margin-bottom:20px;align-items:center">
+    <button class="btn btn-secondary btn-sm" onclick="loadJobs()">🔄 Actualizar desde la nube</button>
+    <div style="flex:1"></div>
+    <span style="font-size:12px;color:var(--text-dim)">Filtre por estado:</span>
+    <select class="form-select" style="width:auto;padding:7px 14px;font-size:12px" id="filter-status" onchange="renderJobs()">
+      <option value="">Todos</option>
+      <option value="Pendiente">Pendiente</option>
+      <option value="Imprimiendo">Imprimiendo</option>
+      <option value="Listo">Listo</option>
+    </select>
+  </div>
+
+  <div class="card" style="padding:0;overflow:hidden">
+    <div style="overflow-x:auto">
+      <table class="jobs-table" id="jobs-table">
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Cliente</th>
+            <th>STL</th>
+            <th>Máquina</th>
+            <th>Estado</th>
+            <th>Precio</th>
+          </tr>
+        </thead>
+        <tbody id="jobs-tbody">
+          <tr><td colspan="6"><div class="empty-state"><div class="empty-icon">📦</div><p>Cargue los trabajos desde la nube</p></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ──────────── CONFIG ──────────── -->
+<section id="sec-config" class="section">
+  <div class="page-title">Configuración <span class="badge">SISTEMA</span></div>
+
+  <div class="config-banner">
+    ⚠ Configure la URL de su Google Apps Script para habilitar la sincronización con Google Sheets.
+  </div>
+
+  <div class="card" style="margin-bottom:20px">
+    <div class="card-title"><span class="dot"></span> Conexión Google Sheets</div>
+    <div class="form-group">
+      <label class="form-label">URL del Web App (Apps Script)</label>
+      <input class="form-input" id="cfg-url" placeholder="https://script.google.com/macros/s/XXXX/exec" oninput="saveConfig()">
+    </div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-primary btn-sm" onclick="testConnection()">🔗 Probar Conexión</button>
+      <span id="conn-status" style="font-size:12px;color:var(--text-dim);display:flex;align-items:center;gap:6px"></span>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:20px">
+    <div class="card-title"><span class="dot"></span> Columnas requeridas en Google Sheets</div>
+    <div style="font-size:13px;color:var(--text-dim);line-height:1.7;margin-bottom:16px">
+      Cree una hoja llamada <span class="tag">Trabajos</span> con estas columnas en orden exacto:
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px">
+      <div class="spec-item"><div class="spec-label">Col A</div><div class="spec-value" style="font-size:13px">Fecha</div></div>
+      <div class="spec-item"><div class="spec-label">Col B</div><div class="spec-value" style="font-size:13px">Cliente</div></div>
+      <div class="spec-item"><div class="spec-label">Col C</div><div class="spec-value" style="font-size:13px">STL</div></div>
+      <div class="spec-item"><div class="spec-label">Col D</div><div class="spec-value" style="font-size:13px">Máquina</div></div>
+      <div class="spec-item"><div class="spec-label">Col E</div><div class="spec-value" style="font-size:13px">Estado</div></div>
+      <div class="spec-item"><div class="spec-label">Col F</div><div class="spec-value" style="font-size:13px">Precio Final</div></div>
+      <div class="spec-item"><div class="spec-label">Col G</div><div class="spec-value" style="font-size:13px">Gramos</div></div>
+      <div class="spec-item"><div class="spec-label">Col H</div><div class="spec-value" style="font-size:13px">Horas</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="dot"></span> Acerca de</div>
+    <div style="font-size:13px;color:var(--text-dim);line-height:2">
+      <strong style="color:var(--white);font-family:'Rajdhani',sans-serif;font-size:18px">ZD3D</strong> – Gestor de Impresión 3D Profesional<br>
+      Versión 1.0 · Soluciones 3D, sin vueltas<br>
+      Los datos se almacenan localmente y en Google Sheets.
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- ──────────── TOAST ──────────── -->
+<div id="toast">
+  <span class="toast-icon" id="toast-icon">✅</span>
+  <span class="toast-msg" id="toast-msg">Mensaje</span>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════
+//  ZD3D – Script Principal
+// ═══════════════════════════════════════════════════
+
+// ─── Estado global ───
+let config = {
+  scriptUrl: 'https://script.google.com/macros/s/AKfycbxVU0C_P3PyqYg91-ykNE7htfSjq2cZ3sXFM3rA5TO0Yl9d1JyoCdQRWPVWvoN2Xv82hw/exec',
+  kwh: 120,
+  rolloG: 1000,
+  machines: [
+    { name: 'Máquina 1', cost: 300000, life: 5000, watts: 350 },
+    { name: 'Máquina 2', cost: 250000, life: 5000, watts: 300 }
+  ]
+};
+let allJobs = [];
+
+// ─── Init ───
+window.onload = () => {
+  loadConfig();
+  renderMachinesGrid();
+  loadMachineEdit();
+  updateDashboard();
+};
+
+// ─── Navegación ───
+function showSection(name) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('sec-' + name).classList.add('active');
+  event.currentTarget.classList.add('active');
+  if (name === 'trabajos') loadJobs();
+  if (name === 'maquinas') renderMachinesGrid();
+  if (name === 'dashboard') updateDashboard();
+}
+
+// ─── Config persistente ───
+function saveConfig() {
+  config.scriptUrl = document.getElementById('cfg-url')?.value || config.scriptUrl;
+  config.kwh = parseFloat(document.getElementById('cfg-kwh')?.value) || config.kwh;
+  config.rolloG = parseFloat(document.getElementById('cfg-rollo-g')?.value) || config.rolloG;
+  localStorage.setItem('zd3d_config', JSON.stringify(config));
+}
+
+function loadConfig() {
+  const saved = localStorage.getItem('zd3d_config');
+  if (saved) config = { ...config, ...JSON.parse(saved) };
+  if (document.getElementById('cfg-url')) document.getElementById('cfg-url').value = config.scriptUrl || '';
+  if (document.getElementById('cfg-kwh')) document.getElementById('cfg-kwh').value = config.kwh || 120;
+  if (document.getElementById('cfg-rollo-g')) document.getElementById('cfg-rollo-g').value = config.rolloG || 1000;
+}
+
+// ─── Cálculo amortización ───
+function getAmortHour(i) {
+  const m = config.machines[i];
+  if (!m || !m.cost || !m.life) return 0;
+  return m.cost / m.life;
+}
+
+function getEnergyCost(i, horas) {
+  const m = config.machines[i];
+  if (!m || !m.watts) return 0;
+  const kw = m.watts / 1000;
+  return kw * horas * (config.kwh || 120);
+}
+
+// ─── Dashboard ───
+function updateDashboard() {
+  const jobs = allJobs;
+  document.getElementById('stat-total').textContent = jobs.length;
+  document.getElementById('stat-pendientes').textContent = jobs.filter(j => j.estado === 'Pendiente').length;
+  document.getElementById('stat-imprimiendo').textContent = jobs.filter(j => j.estado === 'Imprimiendo').length;
+  const total = jobs.reduce((s, j) => s + (parseFloat(j.precio) || 0), 0);
+  document.getElementById('stat-facturado').textContent = '$' + total.toLocaleString('es-AR');
+
+  // Máquinas en dashboard
+  const dm = document.getElementById('dash-machines');
+  dm.innerHTML = config.machines.map((m, i) => `
+    <div style="background:var(--dark-card2);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:16px;color:var(--white)">${m.name}</div>
+        <div style="font-size:11px;color:var(--text-dim);margin-top:3px">Amort: $${getAmortHour(i).toFixed(2)}/h · ${m.watts}W</div>
+      </div>
+      <div class="machine-status status-idle">Disponible</div>
+    </div>
+  `).join('');
+
+  // Últimos trabajos
+  const dj = document.getElementById('dash-jobs');
+  if (jobs.length === 0) {
+    dj.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div><p>No hay trabajos registrados</p></div>';
+    return;
+  }
+  const recent = [...jobs].slice(-5).reverse();
+  dj.innerHTML = `<table class="jobs-table"><thead><tr><th>Cliente</th><th>STL</th><th>Estado</th><th>Precio</th></tr></thead><tbody>
+    ${recent.map(j => `<tr>
+      <td>${j.cliente || '–'}</td>
+      <td style="color:var(--text-dim)">${j.stl || '–'}</td>
+      <td><span class="job-status ${(j.estado||'').toLowerCase()}">${j.estado || '–'}</span></td>
+      <td style="font-family:'Rajdhani',sans-serif;color:var(--blue-bright)">$${parseFloat(j.precio||0).toLocaleString('es-AR')}</td>
+    </tr>`).join('')}
+  </tbody></table>`;
+}
+
+// ─── Máquinas ───
+function renderMachinesGrid() {
+  const grid = document.getElementById('machines-grid');
+  if (!grid) return;
+  grid.innerHTML = config.machines.map((m, i) => `
+    <div class="machine-card active-machine">
+      <div class="machine-header">
+        <div class="machine-name">⚙ ${m.name}</div>
+        <div class="machine-status status-idle">Activa</div>
+      </div>
+      <div class="machine-spec">
+        <div class="spec-item"><div class="spec-label">Costo compra</div><div class="spec-value">$${(m.cost||0).toLocaleString('es-AR')}</div></div>
+        <div class="spec-item"><div class="spec-label">Vida útil</div><div class="spec-value">${m.life||0}h</div></div>
+        <div class="spec-item"><div class="spec-label">Consumo</div><div class="spec-value">${m.watts||0}W</div></div>
+        <div class="spec-item"><div class="spec-label">Amort./hora</div><div class="spec-value" style="color:var(--success)">$${getAmortHour(i).toFixed(2)}</div></div>
+      </div>
+      <button class="btn btn-secondary btn-sm" onclick="selectMachineEdit(${i})">✏ Editar</button>
+    </div>
+  `).join('');
+}
+
+function selectMachineEdit(i) {
+  document.getElementById('edit-machine-select').value = i;
+  loadMachineEdit();
+  document.getElementById('sec-maquinas').scrollIntoView({ behavior: 'smooth' });
+}
+
+function loadMachineEdit() {
+  const i = parseInt(document.getElementById('edit-machine-select').value);
+  const m = config.machines[i];
+  document.getElementById('edit-name').value = m.name || '';
+  document.getElementById('edit-cost').value = m.cost || '';
+  document.getElementById('edit-life').value = m.life || '';
+  document.getElementById('edit-watts').value = m.watts || '';
+}
+
+function saveMachine() {
+  const i = parseInt(document.getElementById('edit-machine-select').value);
+  config.machines[i] = {
+    name: document.getElementById('edit-name').value || `Máquina ${i+1}`,
+    cost: parseFloat(document.getElementById('edit-cost').value) || 0,
+    life: parseFloat(document.getElementById('edit-life').value) || 0,
+    watts: parseFloat(document.getElementById('edit-watts').value) || 0,
+  };
+  saveConfig();
+  renderMachinesGrid();
+  updateMachineSelects();
+  document.getElementById('machine-save-msg').textContent = '✓ Guardado';
+  setTimeout(() => document.getElementById('machine-save-msg').textContent = '', 2000);
+  toast('✅', `Máquina ${i+1} guardada correctamente`);
+}
+
+function updateMachineSelects() {
+  ['q-maquina'].forEach(id => {
+    const sel = document.getElementById(id);
+    if (!sel) return;
+    const curr = sel.value;
+    sel.innerHTML = config.machines.map((m, i) => `<option value="${i}">${m.name}</option>`).join('');
+    sel.value = curr;
+  });
+}
+
+// ─── Cotizador ───
+function calcQuote() {
+  const gramos = parseFloat(document.getElementById('q-gramos').value) || 0;
+  const horas  = parseFloat(document.getElementById('q-horas').value) || 0;
+  const rollo  = parseFloat(document.getElementById('q-rollo').value) || 0;
+  const margen = parseFloat(document.getElementById('q-margen').value) || 0;
+  const mi     = parseInt(document.getElementById('q-maquina').value) || 0;
+  const rolloG = config.rolloG || 1000;
+
+  const precioPorG = rollo / rolloG;
+  const costoFilamento = gramos * precioPorG;
+  const costoAmort = horas * getAmortHour(mi);
+  const costoEnergia = getEnergyCost(mi, horas);
+  const total = costoFilamento + costoAmort + costoEnergia + margen;
+
+  const fmt = v => '$' + v.toLocaleString('es-AR', { maximumFractionDigits: 2 });
+
+  document.getElementById('qr-filamento').textContent = fmt(costoFilamento);
+  document.getElementById('qr-amort').textContent = fmt(costoAmort);
+  document.getElementById('qr-energia').textContent = fmt(costoEnergia);
+  document.getElementById('qr-margen').textContent = fmt(margen);
+  document.getElementById('qr-total').textContent = fmt(total);
+
+  document.getElementById('q-detail-fil').textContent = `${gramos}g × $${precioPorG.toFixed(2)}/g`;
+  document.getElementById('q-detail-amor').textContent = `${horas}h × $${getAmortHour(mi).toFixed(2)}/h`;
+  document.getElementById('q-detail-ener').textContent = `${(config.machines[mi]?.watts||0)}W × ${horas}h`;
+
+  return { costoFilamento, costoAmort, costoEnergia, margen, total, precioPorG };
+}
+
+// ─── Guardar trabajo ───
+async function saveJob() {
+  const cliente = document.getElementById('q-cliente').value.trim();
+  const stl = document.getElementById('q-stl').value.trim();
+  if (!cliente || !stl) { toast('⚠️', 'Complete cliente y STL'); return; }
+
+  const mi = parseInt(document.getElementById('q-maquina').value);
+  const q = calcQuote();
+
+  const payload = {
+    action: 'saveJob',
+    fecha: new Date().toLocaleDateString('es-AR'),
+    cliente,
+    stl,
+    maquina: config.machines[mi]?.name || `Máquina ${mi+1}`,
+    estado: 'Pendiente',
+    precio: q.total.toFixed(2),
+    gramos: document.getElementById('q-gramos').value,
+    horas: document.getElementById('q-horas').value,
+  };
+
+  if (!config.scriptUrl) {
+    // Guardado local si no hay URL configurada
+    allJobs.push(payload);
+    updateDashboard();
+    toast('💾', 'Guardado localmente (configure Apps Script URL para la nube)');
+    return;
+  }
+
+  toast('⏳', 'Enviando a Google Sheets…');
+  try {
+    const res = await fetch(config.scriptUrl, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+      headers: { 'Content-Type': 'text/plain' },
+      mode: 'no-cors'
+    });
+    allJobs.push(payload);
+    updateDashboard();
+    toast('✅', 'Trabajo guardado en Google Sheets');
+  } catch (err) {
+    toast('❌', 'Error al conectar con el servidor');
+  }
+}
+
+// ─── Cargar trabajos ───
+async function loadJobs() {
+  if (!config.scriptUrl) {
+    renderJobs();
+    toast('⚠️', 'Configure la URL de Apps Script para cargar desde la nube');
+    return;
+  }
+  toast('⏳', 'Cargando trabajos…');
+  try {
+    const res = await fetch(`${config.scriptUrl}?action=getData`);
+    const data = await res.json();
+    if (data && data.jobs) {
+      allJobs = data.jobs;
+      updateDashboard();
+      renderJobs();
+      toast('✅', `${allJobs.length} trabajo(s) cargados`);
+    }
+  } catch (err) {
+    renderJobs();
+    toast('⚠️', 'Error al cargar. Mostrando datos locales.');
+  }
+}
+
+function renderJobs() {
+  const filter = document.getElementById('filter-status')?.value || '';
+  const jobs = filter ? allJobs.filter(j => j.estado === filter) : allJobs;
+
+  document.getElementById('jobs-count-badge').textContent = jobs.length;
+
+  const tbody = document.getElementById('jobs-tbody');
+  if (jobs.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">📦</div><p>No hay trabajos registrados</p></div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = [...jobs].reverse().map(j => `
+    <tr>
+      <td style="color:var(--text-dim);font-size:12px">${j.fecha || '–'}</td>
+      <td><strong style="color:var(--white)">${j.cliente || '–'}</strong></td>
+      <td style="color:var(--blue-bright)">${j.stl || '–'}</td>
+      <td><span class="tag">${j.maquina || '–'}</span></td>
+      <td><span class="job-status ${(j.estado||'pendiente').toLowerCase()}">${j.estado || '–'}</span></td>
+      <td><strong style="font-family:'Rajdhani',sans-serif;font-size:16px;color:var(--success)">$${parseFloat(j.precio||0).toLocaleString('es-AR')}</strong></td>
+    </tr>
+  `).join('');
+}
+
+// ─── Test conexión ───
+async function testConnection() {
+  const url = document.getElementById('cfg-url').value;
+  const el = document.getElementById('conn-status');
+  if (!url) { el.textContent = '⚠ Ingrese la URL'; return; }
+  el.innerHTML = '<span class="loader"></span> Conectando…';
+  config.scriptUrl = url;
+  try {
+    await fetch(`${url}?action=ping`, { mode: 'no-cors' });
+    el.innerHTML = '✅ <span style="color:var(--success)">Conexión exitosa</span>';
+    saveConfig();
+  } catch {
+    el.innerHTML = '❌ <span style="color:var(--danger)">Sin respuesta</span>';
+  }
+}
+
+// ─── Toast ───
+let toastTimer;
+function toast(icon, msg) {
+  document.getElementById('toast-icon').textContent = icon;
+  document.getElementById('toast-msg').textContent = msg;
+  const t = document.getElementById('toast');
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3200);
+}
+</script>
+</body>
 </html>
