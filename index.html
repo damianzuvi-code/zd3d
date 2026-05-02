@@ -422,6 +422,14 @@
     border: 1px solid rgba(26,159,212,0.2);
     padding: 2px 8px; border-radius: 4px; letter-spacing: .5px;
   }
+
+  .custom-dropdown-item {
+    display: flex; gap: 10px; align-items: center;
+    padding: 10px; cursor: pointer; transition: background .2s;
+    border-bottom: 1px solid var(--border);
+  }
+  .custom-dropdown-item:hover { background: rgba(26,159,212,0.1); }
+  .custom-dropdown-item:last-child { border-bottom: none; }
 </style>
 </head>
 <body>
@@ -597,9 +605,12 @@
           <label class="form-label">Cliente</label>
           <input class="form-input" id="q-cliente" placeholder="Nombre del cliente">
         </div>
-        <div class="form-group">
+        <div class="form-group" style="position:relative">
           <label class="form-label">Nº Item Catálogo</label>
-          <input class="form-input" id="q-item" placeholder="Ej: 101" onchange="buscarCatalogo()">
+          <input class="form-input" id="q-item" placeholder="Ej: 101" autocomplete="off" oninput="filtrarItemDropdown()" onfocus="mostrarItemDropdown()" onblur="ocultarItemDropdown()">
+          <div id="q-item-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--dark-card);border:1px solid var(--border);border-radius:6px;max-height:220px;overflow-y:auto;z-index:100;box-shadow:var(--glow);margin-top:4px">
+            <!-- Items injected here -->
+          </div>
         </div>
       </div>
 
@@ -1794,6 +1805,64 @@ function buscarCatalogo() {
   }
 }
 
+// ─── Dropdown Item Catálogo ───
+function mostrarItemDropdown() {
+  const dd = document.getElementById('q-item-dropdown');
+  if (!dd) return;
+  if (!bibliotecaSTL.length) {
+    dd.style.display = 'none';
+    return;
+  }
+  filtrarItemDropdown();
+  dd.style.display = 'block';
+}
+
+function ocultarItemDropdown() {
+  setTimeout(() => {
+    const dd = document.getElementById('q-item-dropdown');
+    if (dd) dd.style.display = 'none';
+  }, 200); // Retraso para permitir click
+}
+
+function filtrarItemDropdown() {
+  const val = document.getElementById('q-item').value.toLowerCase();
+  const dd = document.getElementById('q-item-dropdown');
+  const items = bibliotecaSTL.filter(s => 
+    (s.item||'').toLowerCase().includes(val) || 
+    (s.nombre||'').toLowerCase().includes(val)
+  );
+  
+  if (!items.length) {
+    dd.innerHTML = '<div style="padding:10px;font-size:12px;color:var(--text-dim);text-align:center">No hay coincidencias</div>';
+    return;
+  }
+  
+  dd.innerHTML = items.map(s => `
+    <div class="custom-dropdown-item" onclick="seleccionarItemDropdown('${s.item || s.id}')">
+      <div style="width:36px;height:36px;border-radius:4px;background:var(--dark-bg);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0">
+        ${s.imagen ? `<img src="${s.imagen}" style="width:100%;height:100%;object-fit:cover">` : '<span style="font-size:16px;opacity:0.3">📦</span>'}
+      </div>
+      <div style="flex:1">
+        <div style="font-size:13px;color:var(--white);font-weight:600">${s.item ? 'Item ' + s.item : s.nombre}</div>
+        <div style="font-size:11px;color:var(--text-dim)">${s.item ? s.nombre : ''} (${s.gramos}g)</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function seleccionarItemDropdown(itemVal) {
+  const match = bibliotecaSTL.find(s => s.item === itemVal || s.id === itemVal);
+  if (match) {
+    document.getElementById('q-item').value = match.item || '';
+    document.getElementById('q-stl').value = match.nombre;
+    document.getElementById('q-gramos').value = match.gramos;
+    document.getElementById('q-horas').value = match.horas;
+    document.getElementById('q-item-dropdown').style.display = 'none';
+    calcQuote();
+    toast('📚', 'Ítem cargado');
+  }
+}
+
 function limpiarCotizador() {
   document.getElementById('q-cliente').value = '';
   document.getElementById('q-item').value = '';
@@ -1853,14 +1922,14 @@ function renderCatalogoTab() {
   c.innerHTML = bibliotecaSTL.map(s => `
     <div class="card" style="display:flex;gap:12px;align-items:flex-start">
       <div style="width:70px;height:70px;border-radius:8px;background:var(--dark-bg);display:flex;align-items:center;justify-content:center;overflow:hidden;border:1px solid var(--border)">
-        ${s.imagen ? \`<img src="\${s.imagen}" style="width:100%;height:100%;object-fit:cover">\` : '<span style="font-size:24px;opacity:0.2">📦</span>'}
+        ${s.imagen ? `<img src="${s.imagen}" style="width:100%;height:100%;object-fit:cover">` : '<span style="font-size:24px;opacity:0.2">📦</span>'}
       </div>
       <div style="flex:1">
-        <div style="font-size:10px;color:var(--blue-bright);letter-spacing:1px;font-family:'Exo 2',sans-serif">ITEM #\${s.item || s.id.slice(-4)}</div>
-        <div style="font-weight:600;color:var(--white);margin-bottom:4px">\${s.nombre}</div>
-        <div style="font-size:12px;color:var(--text-dim);margin-bottom:8px">\${s.gramos}g | \${s.horas}h</div>
+        <div style="font-size:10px;color:var(--blue-bright);letter-spacing:1px;font-family:'Exo 2',sans-serif">ITEM #${s.item || s.id.slice(-4)}</div>
+        <div style="font-weight:600;color:var(--white);margin-bottom:4px">${s.nombre}</div>
+        <div style="font-size:12px;color:var(--text-dim);margin-bottom:8px">${s.gramos}g | ${s.horas}h</div>
       </div>
-      <button onclick="eliminarItemCatalogoTab('\${s.id}')" class="btn btn-secondary btn-sm" style="border-color:var(--danger);color:var(--danger);padding:4px 8px">✕</button>
+      <button onclick="eliminarItemCatalogoTab('${s.id}')" class="btn btn-secondary btn-sm" style="border-color:var(--danger);color:var(--danger);padding:4px 8px">✕</button>
     </div>
   `).join('');
 }
