@@ -391,61 +391,51 @@
     font-size: 13px; color: #fbbf24; margin-bottom: 20px;
   }
 
-  /* ─── HAMBURGER & MOBILE ─── */
-  .mobile-topbar { display: none; }
-  .mobile-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 90; }
-  .mobile-overlay.open { display: block; }
-
   /* ─── RESPONSIVE ─── */
   @media(max-width:900px) {
-    body { flex-direction: column; overflow: auto; }
-    .mobile-topbar {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 12px 16px; background: rgba(10,12,16,0.92); backdrop-filter: blur(12px);
-      border-bottom: 1px solid var(--border-blue);
-      position: sticky; top: 0; z-index: 80; box-shadow: 0 4px 30px rgba(0,0,0,0.6);
+    body { flex-direction: row; }
+    header { 
+      width: 80px; padding: 16px 8px; gap: 12px; 
+      height: 100vh; position: sticky; top: 0;
     }
-    header {
-      position: fixed; top: 0; left: -280px; bottom: 0; width: 260px; height: 100vh;
-      border-right: 1px solid var(--border-blue); border-bottom: none;
-      flex-direction: column; padding: 24px 20px; gap: 24px;
-      transition: left 0.3s ease; z-index: 100;
-      box-shadow: 4px 0 30px rgba(0,0,0,0.6);
-      background: rgba(10,12,16,0.98);
+    .logo-area { display: none; }
+    .status-area { display: none !important; }
+    
+    nav { flex-direction: column; overflow-y: auto; overflow-x: hidden; gap: 8px; padding-bottom: 20px; }
+    nav::-webkit-scrollbar { display: none; }
+    
+    .nav-btn { 
+      padding: 10px 4px !important; font-size: 9px !important; 
+      flex-direction: column; text-align: center; justify-content: center; 
+      gap: 6px; border-radius: 8px; white-space: normal; height: auto;
     }
-    header.open { left: 0; }
-    .logo-area { margin-bottom: 0; justify-content: flex-start; }
-    .status-area { display: flex !important; }
-    nav { flex-direction: column; overflow-y: auto; overflow-x: hidden; padding-bottom: 2px; gap: 6px; }
-    .nav-btn { padding: 12px 16px; font-size: 13px; white-space: normal; flex-shrink: 0; }
-    main { height: auto; overflow-y: visible; }
-    main > .section { padding: 20px; }
-    .grid-4 { grid-template-columns: 1fr 1fr; }
-    .grid-3 { grid-template-columns: 1fr 1fr; }
-    .form-row-3 { grid-template-columns: 1fr 1fr; }
-    .settings-grid { grid-template-columns: 1fr 1fr; }
+    .nav-btn .icon { margin-right: 0; font-size: 22px; }
+    
+    #nav-badge-pend { 
+      position: absolute; top: 4px; right: 4px; 
+      font-size: 9px; padding: 2px 4px; margin: 0; border: none; 
+    }
+    .nav-btn[onclick*="Pendiente"] { position: relative; }
+    
+    main { width: calc(100vw - 80px); height: 100vh; overflow-y: auto; overflow-x: hidden; }
+    main > .section { padding: 16px; }
+    
+    .grid-4, .grid-3, .form-row-3, .settings-grid { grid-template-columns: 1fr 1fr; }
   }
   @media(max-width:640px) {
-    header { padding: 8px 12px; gap: 10px; flex-wrap: wrap; }
-    .logo-area { width: 100%; justify-content: center; }
-    nav { width: 100%; }
-    .logo-text { font-size: 20px; }
-    .logo-sub { font-size: 8px; }
-    main > .section { padding: 16px 12px; }
-    .grid-2, .grid-3 { grid-template-columns: 1fr; }
-    .form-row, .form-row-3, .settings-grid { grid-template-columns: 1fr; }
+    .grid-4, .grid-3, .form-row-3, .settings-grid { grid-template-columns: 1fr; }
+    .grid-2 { grid-template-columns: 1fr; }
+    .form-row { grid-template-columns: 1fr; }
     .quote-breakdown { grid-template-columns: 1fr; }
-    .card { padding: 16px; }
     .page-title { font-size: 22px; flex-wrap: wrap; gap: 8px; }
     .stat-box { padding: 12px 14px; }
     .stat-value { font-size: 22px; }
     .btn { padding: 9px 16px; font-size: 12px; justify-content: center; }
-    .machine-spec { grid-template-columns: 1fr; }
     .jobs-table th, .jobs-table td { padding: 10px 8px; font-size: 11px; }
     #toast { right: 16px; bottom: 16px; left: 16px; max-width: none; }
     .edit-modal { padding: 20px; }
     .stats-grid { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin-bottom: 20px; }
-    .filter-bar { gap: 8px; }
+    .filter-bar { gap: 8px; flex-wrap: wrap; }
     .filter-spacer { display: none; }
   }
 
@@ -503,11 +493,6 @@
 </div>
 
 <!-- ═══════════ HEADER / SIDEBAR ═══════════ -->
-<div class="mobile-overlay" id="mobile-overlay" onclick="toggleMenu()"></div>
-<div class="mobile-topbar">
-  <div class="logo-text" style="font-size:24px;"><span>ZD</span><span>3D</span></div>
-  <button style="background:none;border:none;color:var(--white);font-size:28px;cursor:pointer;padding:0 8px" onclick="toggleMenu()">☰</button>
-</div>
 <header id="main-header">
   <div class="logo-area">
     <div>
@@ -1140,13 +1125,7 @@ async function initApp() {
 };
 
 // ─── Navegación ───
-function toggleMenu() {
-  document.getElementById('main-header').classList.toggle('open');
-  document.getElementById('mobile-overlay').classList.toggle('open');
-}
-
 function showSection(name) {
-  if(window.innerWidth <= 900) { document.getElementById('main-header').classList.remove('open'); document.getElementById('mobile-overlay').classList.remove('open'); }
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('sec-' + name).classList.add('active');
