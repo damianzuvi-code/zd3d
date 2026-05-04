@@ -956,7 +956,13 @@
         <input class="form-input" id="cat-imagen" placeholder="https://...">
       </div>
     </div>
-    <button class="btn btn-primary" onclick="guardarItemCatalogoTab()" style="width:100%">💾 Guardar en Catálogo</button>
+    <div class="form-row" style="margin-bottom:12px">
+      <div class="form-group" style="width:100%">
+        <label class="form-label">URL del STL (Drive/Thingiverse) <span style="font-size:10px;font-weight:400">(opcional)</span></label>
+        <input class="form-input" id="cat-url" placeholder="https://...">
+      </div>
+    </div>
+    <button class="btn btn-primary" id="btn-guardar-catalogo" onclick="guardarItemCatalogoTab()" style="width:100%">💾 Guardar en Catálogo</button>
   </div>
 
   <div class="grid-2" id="catalogo-grid">
@@ -1109,16 +1115,26 @@ async function initApp() {
       if (dCons?.consumibles) bibliotecaConsumibles = dCons.consumibles;
       if (dFil?.filamentos)   bibliotecaFilamentos  = dFil.filamentos;
       if (dProm?.promos)      bibliotecaPromos      = dProm.promos;
-      if (dStl?.stls)         { bibliotecaSTL = dStl.stls; renderCatalogoTab(); }
+      if (dStl?.stls)         { 
+        bibliotecaSTL = dStl.stls; 
+        renderCatalogoTab(); 
+        document.getElementById('cat-item').value = getNextCatalogoItem();
+      }
+
+      aplicarPLADefault();
 
       updateDashboard();
       renderJobs();
       toast('✅', `Datos cargados — ${allJobs.length} trabajo(s)`);
     } catch(e) {
+      aplicarPLADefault();
+      if (!document.getElementById('cat-item').value) document.getElementById('cat-item').value = getNextCatalogoItem();
       updateDashboard();
       toast('⚠️', 'Sin conexión — mostrando datos locales');
     }
   } else {
+    aplicarPLADefault();
+    if (!document.getElementById('cat-item').value) document.getElementById('cat-item').value = getNextCatalogoItem();
     updateDashboard();
     toast('⚠️', 'Configurá la URL de Apps Script en Config');
   }
@@ -1133,7 +1149,17 @@ function showSection(name) {
   if (name === 'trabajos') loadJobs();
   if (name === 'maquinas') renderMachinesGrid();
   if (name === 'dashboard') updateDashboard();
-  if (name === 'cotizar') { trabajoConsumibles = []; renderConsumiblesDelTrabajo(); calcQuote(); }
+  if (name === 'catalogo') {
+    if (!editingCatalogoId && !document.getElementById('cat-item').value) {
+      document.getElementById('cat-item').value = getNextCatalogoItem();
+    }
+  }
+  if (name === 'cotizar') { 
+    aplicarPLADefault();
+    trabajoConsumibles = []; 
+    renderConsumiblesDelTrabajo(); 
+    calcQuote(); 
+  }
   if (name === 'promos') { 
     if (typeof renderPromosTab === 'function') renderPromosTab();
     const today = new Date();
@@ -1397,6 +1423,26 @@ let bibliotecaFilamentos  = [];  // cargados desde Sheets
 let bibliotecaPromos      = [];  // cargados desde Sheets
 let trabajoConsumibles    = [];  // los del trabajo actual
 
+// ─── Default Cotizador ───
+function aplicarPLADefault() {
+  const qRollo = document.getElementById('q-rollo');
+  if (qRollo && !qRollo.value) {
+    const pla = bibliotecaFilamentos.find(f => f.tipo.toLowerCase().includes('pla'));
+    if (pla) {
+      qRollo.value = pla.precio;
+      if (config.rolloG !== pla.peso) { config.rolloG = pla.peso; saveConfig(); }
+    } else {
+      qRollo.value = 15000;
+    }
+  }
+  
+  const qMargen = document.getElementById('q-margen');
+  if (qMargen) qMargen.value = '100';
+  if (typeof setMargenMode === 'function') setMargenMode('pct');
+  
+  calcQuote();
+}
+
 async function cargarBibliotecas() {
   if (!config.scriptUrl) return;
   try {
@@ -1412,13 +1458,7 @@ async function cargarBibliotecas() {
     if (df.filamentos)  bibliotecaFilamentos  = df.filamentos;
     if (dp.promos)      bibliotecaPromos      = dp.promos;
 
-    // Cargar PLA por defecto en Cotizador si está vacío
-    const pla = bibliotecaFilamentos.find(f => f.tipo.toLowerCase().includes('pla'));
-    if (pla && !document.getElementById('q-rollo').value) {
-      document.getElementById('q-rollo').value = pla.precio;
-      if (config.rolloG !== pla.peso) { config.rolloG = pla.peso; saveConfig(); }
-      calcQuote();
-    }
+    aplicarPLADefault();
   } catch(e) {}
 }
 
@@ -1962,6 +2002,7 @@ function showCatalogoPicker() {
       <div>
         <div style="font-size:13px;color:var(--white);font-weight:600">${s.nombre}</div>
         <div style="font-size:11px;color:var(--text-dim)">${s.gramos}g | ${s.horas}h</div>
+        ${s.url ? `<a href="${s.url}" target="_blank" style="font-size:10px;color:var(--blue);text-decoration:none">🔗 Ver STL</a>` : ''}
       </div>
       <div style="display:flex;gap:6px">
         <button class="btn btn-secondary btn-sm" onclick="usarSTL('${s.nombre}', ${s.gramos}, ${s.horas})">Seleccionar</button>
@@ -2090,11 +2131,8 @@ function limpiarCotizador() {
   document.getElementById('q-gramos').value = '';
   document.getElementById('q-horas').value = '';
   
-  const pla = bibliotecaFilamentos.find(f => f.tipo.toLowerCase().includes('pla'));
-  document.getElementById('q-rollo').value = pla ? pla.precio : '';
-  
-  document.getElementById('q-margen').value = '100';
-  setMargenMode('pct');
+  document.getElementById('q-rollo').value = '';
+  aplicarPLADefault();
   
   document.getElementById('q-adelanto').value = '';
   trabajoConsumibles = [];
@@ -2156,23 +2194,71 @@ function renderCatalogoTab() {
         <div style="font-size:10px;color:var(--blue-bright);letter-spacing:1px;font-family:'Exo 2',sans-serif">ITEM #${s.item || s.id.slice(-4)}</div>
         <div style="font-weight:600;color:var(--white);margin-bottom:4px">${s.nombre}</div>
         <div style="font-size:12px;color:var(--text-dim);margin-bottom:8px">${s.gramos}g | ${s.horas}h</div>
+        ${s.url ? `<a href="${s.url}" target="_blank" style="font-size:11px;color:var(--blue);text-decoration:none;display:inline-block;margin-bottom:8px">🔗 Ver STL</a>` : ''}
       </div>
-      <button onclick="eliminarItemCatalogoTab('${s.id}')" class="btn btn-secondary btn-sm" style="border-color:var(--danger);color:var(--danger);padding:4px 8px">✕</button>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <button onclick="editarItemCatalogoTab('${s.id}')" class="btn btn-secondary btn-sm" style="padding:4px 8px">✏️</button>
+        <button onclick="eliminarItemCatalogoTab('${s.id}')" class="btn btn-secondary btn-sm" style="border-color:var(--danger);color:var(--danger);padding:4px 8px">✕</button>
+      </div>
     </div>
   `).join('');
 }
 
+let editingCatalogoId = null;
+
+function getNextCatalogoItem() {
+  if (!bibliotecaSTL.length) return 1;
+  let max = 0;
+  for (const s of bibliotecaSTL) {
+    const num = parseInt(s.item);
+    if (!isNaN(num) && num > max) max = num;
+  }
+  return max + 1;
+}
+
+function editarItemCatalogoTab(id) {
+  const item = bibliotecaSTL.find(s => s.id === id);
+  if (!item) return;
+  document.getElementById('cat-item').value = item.item || '';
+  document.getElementById('cat-nombre').value = item.nombre || '';
+  document.getElementById('cat-gramos').value = item.gramos || '';
+  document.getElementById('cat-horas').value = item.horas || '';
+  document.getElementById('cat-imagen').value = item.imagen || '';
+  document.getElementById('cat-url').value = item.url || '';
+  
+  document.getElementById('btn-guardar-catalogo').innerHTML = '💾 Actualizar en Catálogo';
+  editingCatalogoId = id;
+  document.getElementById('cat-nombre').focus();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
 async function guardarItemCatalogoTab() {
-  const item   = document.getElementById('cat-item').value.trim();
+  const itemVal   = document.getElementById('cat-item').value.trim();
   const nombre = document.getElementById('cat-nombre').value.trim();
   const gramos = parseFloat(document.getElementById('cat-gramos').value) || 0;
   const horas  = parseFloat(document.getElementById('cat-horas').value) || 0;
   const imagen = document.getElementById('cat-imagen').value.trim();
+  const urlStl = document.getElementById('cat-url').value.trim();
   
   if (!nombre) { toast('⚠️', 'Completá el nombre'); return; }
   
-  const id = Date.now()+'';
-  const stlObj = { id, item, nombre, gramos, horas, imagen };
+  toast('⏳', 'Guardando...');
+
+  let id = editingCatalogoId;
+  if (id) {
+    if (config.scriptUrl) {
+      await fetch(config.scriptUrl, {
+        method: 'POST', mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({ action: 'deleteCatalogo', id })
+      });
+    }
+    bibliotecaSTL = bibliotecaSTL.filter(s => s.id !== id);
+  } else {
+    id = Date.now()+'';
+  }
+  
+  const stlObj = { id, item: itemVal, nombre, gramos, horas, imagen, url: urlStl };
   bibliotecaSTL.push(stlObj);
   
   if (config.scriptUrl) {
@@ -2183,14 +2269,18 @@ async function guardarItemCatalogoTab() {
     });
   }
   
-  document.getElementById('cat-item').value = '';
+  editingCatalogoId = null;
+  document.getElementById('btn-guardar-catalogo').innerHTML = '💾 Guardar en Catálogo';
+  
+  document.getElementById('cat-item').value = getNextCatalogoItem();
   document.getElementById('cat-nombre').value = '';
   document.getElementById('cat-gramos').value = '';
   document.getElementById('cat-horas').value = '';
   document.getElementById('cat-imagen').value = '';
+  document.getElementById('cat-url').value = '';
   
   renderCatalogoTab();
-  toast('✅', 'Ítem agregado al catálogo');
+  toast('✅', id ? 'Ítem actualizado' : 'Ítem agregado al catálogo');
 }
 
 async function eliminarItemCatalogoTab(id) {
