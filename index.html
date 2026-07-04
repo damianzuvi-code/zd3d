@@ -1143,6 +1143,13 @@
 
   <div class="card" style="margin-bottom:20px">
     <div class="card-title"><span class="dot"></span> Agregar Nuevo Artículo</div>
+
+    <!-- Importar desde link -->
+    <div style="display:flex;gap:8px;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border)">
+      <input class="form-input" id="cat-import-url" placeholder="🔗 Pegá el link del modelo (MakerWorld, Printables, Thingiverse...)" style="flex:1" onkeydown="if(event.key==='Enter') importarDesdeLink()">
+      <button class="btn btn-primary btn-sm" id="btn-cat-import" onclick="importarDesdeLink()" style="white-space:nowrap">📥 Importar</button>
+    </div>
+
     <div class="form-row-3" style="margin-bottom:12px">
       <div class="form-group">
         <label class="form-label">Nº de Ítem</label>
@@ -3164,6 +3171,52 @@ async function guardarItemCatalogoTab() {
   
   renderCatalogoTab();
   toast('✅', wasEdit ? 'Ítem actualizado' : 'Ítem agregado al catálogo');
+}
+
+// ─── Importar modelo desde un link (usa el scraper del Apps Script) ───
+async function importarDesdeLink() {
+  const inp = document.getElementById('cat-import-url');
+  const url = (inp?.value || '').trim();
+  if (!url || !/^https?:\/\//i.test(url)) { toast('⚠️', 'Pegá un link válido (tiene que empezar con https://)'); return; }
+  if (!config.scriptUrl) { toast('⚠️', 'Configurá la URL de Apps Script en Config'); return; }
+
+  const btn = document.getElementById('btn-cat-import');
+  const prevHtml = btn.innerHTML;
+  btn.innerHTML = '<span class="loader"></span>';
+  btn.disabled = true;
+
+  try {
+    const r = await fetch(`${config.scriptUrl}?action=scrape&url=${encodeURIComponent(url)}`);
+    const d = await r.json();
+    if (d.status !== 'ok') throw new Error(d.message || 'Error al leer la página');
+    aplicarDatosImportados(d, url);
+  } catch (e) {
+    toast('❌', 'No pude leer ese link. Completá los datos a mano.');
+  }
+
+  btn.innerHTML = prevHtml;
+  btn.disabled = false;
+}
+
+function aplicarDatosImportados(d, url) {
+  if (d.titulo) document.getElementById('cat-nombre').value = d.titulo;
+  if (d.imagen) document.getElementById('cat-imagen').value = d.imagen;
+  document.getElementById('cat-url').value = url;
+  if (parseFloat(d.gramos) > 0) document.getElementById('cat-gramos').value = d.gramos;
+  if (parseFloat(d.horas) > 0)  document.getElementById('cat-horas').value = d.horas;
+  calcCatQuote();
+
+  const partes = [];
+  if (d.titulo) partes.push('nombre');
+  if (d.imagen) partes.push('imagen');
+  if (parseFloat(d.gramos) > 0) partes.push(d.gramos + 'g');
+  if (parseFloat(d.horas) > 0)  partes.push(d.horas + 'h');
+  toast('📥', partes.length
+    ? 'Importado: ' + partes.join(', ') + '. Elegí material/precio y guardá.'
+    : 'Link cargado, pero esa página no publica los datos — completá a mano.');
+
+  document.getElementById('cat-import-url').value = '';
+  document.getElementById('cat-nombre').focus();
 }
 
 async function eliminarItemCatalogoTab(id) {
