@@ -444,9 +444,11 @@
     main > .section { padding: 16px; }
     
     .grid-4, .grid-3, .form-row-3, .settings-grid { grid-template-columns: 1fr 1fr; }
+    .form-row-4 { grid-template-columns: 1fr 1fr !important; }
   }
   @media(max-width:640px) {
     .grid-4, .grid-3, .form-row-3, .settings-grid { grid-template-columns: 1fr; }
+    .form-row-4 { grid-template-columns: 1fr 1fr !important; }
     .grid-2 { grid-template-columns: 1fr; }
     .form-row { grid-template-columns: 1fr; }
     .quote-breakdown { grid-template-columns: 1fr; }
@@ -572,6 +574,8 @@
 <!-- ──────────── DASHBOARD ──────────── -->
 <section id="sec-dashboard" class="section active">
   <div class="page-title">Dashboard <span class="badge">RESUMEN</span></div>
+
+  <div id="dash-entregas-alerta" style="display:none"></div>
 
   <div class="stats-grid">
     <div class="stat-box">
@@ -740,13 +744,17 @@
         </div>
       </div>
 
-      <div class="form-row-3">
+      <div class="form-row-4" style="display:grid;grid-template-columns:0.7fr 1fr 1fr 1.3fr;gap:14px">
         <div class="form-group">
-          <label class="form-label">Gramos (g)</label>
+          <label class="form-label" style="display:flex;align-items:center;justify-content:space-between">Cant. <span style="font-size:9px;font-weight:400">(unid.)</span></label>
+          <input class="form-input" id="q-cantidad" type="number" min="1" step="1" placeholder="1" value="1" oninput="calcQuote()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Gramos (g) <span style="font-size:9px;font-weight:400">c/u</span></label>
           <input class="form-input" id="q-gramos" type="number" placeholder="0" oninput="calcQuote()">
         </div>
         <div class="form-group">
-          <label class="form-label">Tiempo (horas)</label>
+          <label class="form-label">Tiempo (h) <span style="font-size:9px;font-weight:400">c/u</span></label>
           <input class="form-input" id="q-horas" type="number" placeholder="0" oninput="calcQuote()">
         </div>
         <div class="form-group">
@@ -1119,11 +1127,16 @@
           </div>
         </div>
         <div class="form-row" style="margin-bottom:12px">
-          <div class="form-group" style="width:100%">
+          <div class="form-group">
             <label class="form-label">Precio Unitario ($)</label>
             <input class="form-input" id="mp-cons-precio" type="number" placeholder="Ej: 250">
           </div>
+          <div class="form-group">
+            <label class="form-label">Stock actual (u.) <span style="font-size:10px;font-weight:400">(opc)</span></label>
+            <input class="form-input" id="mp-cons-stock" type="number" placeholder="Ej: 20">
+          </div>
         </div>
+        <div style="font-size:11px;color:var(--text-dim);margin-bottom:12px">💡 Si cargás el stock, se descuenta solo cada vez que vendés un producto que use este consumible.</div>
         <button class="btn btn-primary" id="btn-mp-consumible" onclick="guardarConsumibleMP()" style="width:100%; background:linear-gradient(135deg, var(--warning), #b45309)">💾 Guardar Consumible</button>
       </div>
 
@@ -1223,6 +1236,11 @@
     <button class="btn btn-primary" id="btn-guardar-catalogo" onclick="guardarItemCatalogoTab()" style="width:100%">💾 Guardar en Catálogo</button>
   </div>
 
+  <div class="card" id="cat-top-ventas-card" style="display:none;margin-bottom:20px">
+    <div class="card-title"><span class="dot"></span> 🏆 Más Vendidos</div>
+    <div id="cat-top-ventas-list"></div>
+  </div>
+
   <div class="grid-2" id="catalogo-grid">
     <!-- Generado por JS -->
   </div>
@@ -1251,6 +1269,16 @@
       <button class="btn btn-secondary btn-sm" onclick="cerrarSesion()" style="border-color:rgba(239,68,68,0.5);color:var(--danger)">🔒 Bloquear (Cerrar Sesión)</button>
       <span id="conn-status" style="font-size:12px;color:var(--text-dim);display:flex;align-items:center;gap:6px"></span>
     </div>
+  </div>
+
+  <div class="card" style="margin-bottom:20px">
+    <div class="card-title"><span class="dot"></span> 📱 Catálogo Público para Clientes</div>
+    <div style="font-size:13px;color:var(--text-dim);margin-bottom:16px">Compartí un link de solo-lectura con fotos y precios para que tus clientes elijan directamente, sin acceso al resto de la app.</div>
+    <div class="form-group">
+      <label class="form-label" style="display:flex;justify-content:space-between">Tu WhatsApp (para que te hagan el pedido) <span style="font-weight:400;color:var(--text-dim);text-transform:none">(opcional)</span></label>
+      <input class="form-input" id="cfg-whatsapp" placeholder="Ej: 5491122334455 (código país + área, sin +)" oninput="saveConfig()">
+    </div>
+    <button class="btn btn-primary btn-sm" onclick="compartirCatalogoPublico()" style="background:linear-gradient(135deg,#128c4b,#25d366)">📤 Compartir Catálogo por WhatsApp</button>
   </div>
 
   <div class="card" style="margin-bottom:20px">
@@ -1383,6 +1411,71 @@ function cargarCacheLocal() {
   } catch (e) { return false; }
 }
 
+// ─── Catálogo Público (link compartible, sin login) ───
+function compartirCatalogoPublico() {
+  const base = location.origin + location.pathname;
+  const wa = (config.whatsapp || '').replace(/\D/g, '');
+  const link = base + '?catalogo=1' + (wa ? '&wa=' + wa : '');
+  const msg = `¡Hola! 👋 Mirá nuestro catálogo de impresiones 3D con precios, elegí lo que te guste y hacé tu pedido:\n\n${link}\n\n_ZD3D · Soluciones 3D, sin vueltas_ ✨`;
+  window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
+}
+
+async function mostrarCatalogoPublico() {
+  document.title = 'ZD3D – Catálogo';
+  document.body.innerHTML = `
+    <div id="pub-cat" style="max-width:900px;margin:0 auto;padding:24px 16px;min-height:100vh">
+      <div style="text-align:center;margin-bottom:24px">
+        <div class="logo-text" style="font-size:32px;justify-content:center;display:flex"><span>ZD</span><span>3D</span></div>
+        <div style="font-size:12px;color:var(--text-dim);letter-spacing:1px;text-transform:uppercase;margin-top:2px">Catálogo · Soluciones 3D, sin vueltas</div>
+      </div>
+      <div id="pub-cat-body"><div class="empty-state"><div class="loader" style="width:28px;height:28px"></div><p style="margin-top:12px">Cargando catálogo…</p></div></div>
+    </div>`;
+
+  const scriptUrl = config.scriptUrl;
+  const wa = new URLSearchParams(location.search).get('wa') || '';
+  const body = document.getElementById('pub-cat-body');
+
+  if (!scriptUrl) {
+    body.innerHTML = '<div class="empty-state"><p>Catálogo no disponible.</p></div>';
+    return;
+  }
+
+  try {
+    const [rStl, rFil] = await Promise.all([
+      fetch(`${scriptUrl}?action=getCatalogo`),
+      fetch(`${scriptUrl}?action=getFilamentos`)
+    ]);
+    const dStl = await rStl.json();
+    const dFil = await rFil.json();
+    const stls = dStl?.stls || [];
+    bibliotecaFilamentos = dFil?.filamentos || [];
+
+    if (!stls.length) {
+      body.innerHTML = '<div class="empty-state"><div class="empty-icon">📦</div><p>Todavía no hay artículos en el catálogo.</p></div>';
+      return;
+    }
+
+    body.innerHTML = `<div class="grid-2">${stls.map(s => {
+      const pv = precioVentaCatalogo(s);
+      const msg = `¡Hola! Quiero encargar: ${s.item ? '#' + s.item + ' ' : ''}${s.nombre}${pv > 0 ? ' - $' + Math.round(pv).toLocaleString('es-AR') : ''}`;
+      const waLink = wa ? `https://wa.me/${wa}?text=${encodeURIComponent(msg)}` : `https://wa.me/?text=${encodeURIComponent(msg)}`;
+      return `
+      <div class="card" style="display:flex;gap:12px;align-items:flex-start">
+        <div style="width:80px;height:80px;border-radius:8px;background:var(--dark-bg);display:flex;align-items:center;justify-content:center;overflow:hidden;border:1px solid var(--border);flex-shrink:0">
+          ${s.imagen ? `<img src="${esc(s.imagen)}" style="width:100%;height:100%;object-fit:cover">` : '<span style="font-size:28px;opacity:0.2">📦</span>'}
+        </div>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:600;color:var(--white);margin-bottom:4px">${esc(s.nombre)}</div>
+          ${pv > 0 ? `<div style="font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;color:var(--success);margin-bottom:8px">$${Math.round(pv).toLocaleString('es-AR')}</div>` : ''}
+          <a href="${waLink}" target="_blank" style="display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#128c4b,#25d366);color:white;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:600;text-decoration:none">📱 Pedir por WhatsApp</a>
+        </div>
+      </div>`;
+    }).join('')}</div>`;
+  } catch (e) {
+    body.innerHTML = '<div class="empty-state"><p>No se pudo cargar el catálogo. Probá de nuevo más tarde.</p></div>';
+  }
+}
+
 // ─── LOGIN & INIT ───
 const PIN_SECRETO = 'zuv3d'; // Puedes cambiarlo desde aquí
 
@@ -1404,6 +1497,11 @@ function cerrarSesion() {
 }
 
 window.onload = () => {
+  if (new URLSearchParams(location.search).get('catalogo') === '1') {
+    document.getElementById('lock-screen').style.display = 'none';
+    mostrarCatalogoPublico();
+    return;
+  }
   if (localStorage.getItem('zd3d_unlocked') === 'yes') {
     document.getElementById('lock-screen').style.display = 'none';
     initApp();
@@ -1507,7 +1605,8 @@ function showSection(name) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('sec-' + name).classList.add('active');
-  event.currentTarget.classList.add('active');
+  const navBtn = [...document.querySelectorAll('.nav-btn')].find(b => (b.getAttribute('onclick')||'').includes(`showSection('${name}')`));
+  if (navBtn) navBtn.classList.add('active');
   if (name === 'trabajos') loadJobs();
   if (name === 'maquinas') renderMachinesGrid();
   if (name === 'dashboard') updateDashboard();
@@ -1546,6 +1645,8 @@ function saveConfig() {
   config.rolloG = parseFloat(document.getElementById('cfg-rollo-g')?.value) || config.rolloG;
   const tokenInput = document.getElementById('cfg-token');
   if (tokenInput) config.token = tokenInput.value.trim();
+  const waInput = document.getElementById('cfg-whatsapp');
+  if (waInput) config.whatsapp = waInput.value.replace(/\D/g, '');
   localStorage.setItem('zd3d_config', JSON.stringify(config));
 }
 
@@ -1561,6 +1662,7 @@ function loadConfig() {
   if (document.getElementById('cfg-kwh')) document.getElementById('cfg-kwh').value = config.kwh || 120;
   if (document.getElementById('cfg-rollo-g')) document.getElementById('cfg-rollo-g').value = config.rolloG || 1000;
   if (document.getElementById('cfg-token')) document.getElementById('cfg-token').value = config.token || '';
+  if (document.getElementById('cfg-whatsapp')) document.getElementById('cfg-whatsapp').value = config.whatsapp || '';
 }
 
 // ─── Cálculo amortización ───
@@ -1707,11 +1809,55 @@ function animateValue(obj, end, duration, prefix = '') {
   window.requestAnimationFrame(step);
 }
 
+// ─── Alerta de entregas próximas (Dashboard) ───
+function renderAlertaEntregas() {
+  const box = document.getElementById('dash-entregas-alerta');
+  if (!box) return;
+
+  const hoy = new Date(); hoy.setHours(0,0,0,0);
+  const en3dias = new Date(hoy); en3dias.setDate(en3dias.getDate() + 3);
+
+  const pendientesConEntrega = allJobs
+    .filter(j => j.estado !== 'Listo' && j.fechaEntrega)
+    .map(j => ({ ...j, fe: parseFechaDMY(j.fechaEntrega) }))
+    .filter(j => j.fe);
+
+  const vencidos = pendientesConEntrega.filter(j => j.fe < hoy);
+  const proximos  = pendientesConEntrega.filter(j => j.fe >= hoy && j.fe <= en3dias);
+
+  if (!vencidos.length && !proximos.length) {
+    box.style.display = 'none';
+    box.innerHTML = '';
+    return;
+  }
+
+  const fmtDia = j => {
+    const dias = Math.round((j.fe - hoy) / 86400000);
+    if (dias < 0) return `hace ${Math.abs(dias)} día(s)`;
+    if (dias === 0) return 'hoy';
+    if (dias === 1) return 'mañana';
+    return `en ${dias} días`;
+  };
+
+  const chip = (j, color) => `<span style="display:inline-flex;align-items:center;gap:5px;background:rgba(0,0,0,0.25);border-radius:14px;padding:3px 10px;font-size:11px;color:${color}">${esc(j.cliente)||'Sin nombre'} · ${esc(j.stl)||''} — ${fmtDia(j)}</span>`;
+
+  let html = '<div class="config-banner" style="flex-direction:column;align-items:flex-start;gap:8px;background:rgba(239,68,68,0.06);border-color:rgba(239,68,68,0.25)">';
+  html += `<div style="display:flex;align-items:center;gap:8px;font-weight:600;color:#fbbf24">⏰ ${vencidos.length + proximos.length} entrega(s) que atender</div>`;
+  html += '<div style="display:flex;flex-wrap:wrap;gap:6px">';
+  html += vencidos.map(j => chip(j, 'var(--danger)')).join('');
+  html += proximos.map(j => chip(j, 'var(--warning)')).join('');
+  html += '</div></div>';
+
+  box.innerHTML = html;
+  box.style.display = 'block';
+}
+
 function updateDashboard() {
   guardarCacheLocal();
   const jobs = allJobs;
   const pendientesCount = jobs.filter(j => j.estado === 'Pendiente').length;
   if(document.getElementById('nav-badge-pend')) document.getElementById('nav-badge-pend').textContent = pendientesCount;
+  renderAlertaEntregas();
   
   animateValue(document.getElementById('stat-total'), jobs.length, 600);
   animateValue(document.getElementById('stat-pendientes'), pendientesCount, 600);
@@ -2152,9 +2298,16 @@ function renderMateriaPrimaTab() {
   if (!bibliotecaConsumibles.length) {
     consList.innerHTML = '<div style="color:var(--text-dim);font-size:12px;text-align:center;padding:10px">No hay consumibles guardados.</div>';
   } else {
-    consList.innerHTML = bibliotecaConsumibles.map(c => `
+    consList.innerHTML = bibliotecaConsumibles.map(c => {
+      const tieneStock = c.stock !== undefined && c.stock !== null && c.stock !== '';
+      const st = tieneStock ? parseFloat(c.stock) || 0 : null;
+      const stColor = st <= 0 ? 'var(--danger)' : st < 5 ? 'var(--warning)' : 'var(--success)';
+      return `
       <div style="display:flex;justify-content:space-between;align-items:center;background:var(--dark-card2);padding:10px 14px;border:1px solid var(--border);border-radius:8px">
-        <div style="font-weight:600;font-size:14px;color:var(--white)">${esc(c.nombre)}</div>
+        <div>
+          <div style="font-weight:600;font-size:14px;color:var(--white)">${esc(c.nombre)}</div>
+          ${tieneStock ? `<div style="font-size:11px;font-weight:600;color:${stColor}">📦 Stock: ${Math.round(st)} u.${st <= 0 ? ' — ¡Reponer!' : st < 5 ? ' — Queda poco' : ''}</div>` : ''}
+        </div>
         <div style="display:flex;align-items:center;gap:12px">
           <div style="font-family:'Rajdhani',sans-serif;font-size:16px;color:var(--warning)">$${Math.round(c.precio).toLocaleString('es-AR')}</div>
           <div style="display:flex;gap:6px">
@@ -2163,7 +2316,7 @@ function renderMateriaPrimaTab() {
           </div>
         </div>
       </div>
-    `).join('');
+    `}).join('');
   }
 }
 
@@ -2234,7 +2387,8 @@ function editarConsumibleMP(id) {
   if (!c) return;
   document.getElementById('mp-cons-nombre').value = c.nombre || '';
   document.getElementById('mp-cons-precio').value = c.precio || '';
-  
+  document.getElementById('mp-cons-stock').value = (c.stock !== undefined && c.stock !== null && c.stock !== '') ? c.stock : '';
+
   editingConsumibleId = id;
   document.getElementById('btn-mp-consumible').innerHTML = '💾 Actualizar Consumible';
 }
@@ -2242,7 +2396,8 @@ function editarConsumibleMP(id) {
 function guardarConsumibleMP() {
   const nombre = document.getElementById('mp-cons-nombre').value.trim();
   const precio = parseFloat(document.getElementById('mp-cons-precio').value) || 0;
-  
+  const stockStr = (document.getElementById('mp-cons-stock')?.value || '').trim();
+
   if (!nombre) { toast('⚠️', 'Completá el nombre'); return; }
 
   const wasEdit = !!editingConsumibleId;
@@ -2259,22 +2414,25 @@ function guardarConsumibleMP() {
   } else {
     id = Date.now()+'';
   }
-  
-  bibliotecaConsumibles.push({ id, nombre, precio });
-  
+
+  const cons = { id, nombre, precio };
+  if (stockStr !== '') cons.stock = parseFloat(stockStr) || 0;
+  bibliotecaConsumibles.push(cons);
+
   if (config.scriptUrl) {
     fetch(config.scriptUrl, {
       method: 'POST', mode: 'no-cors',
       headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({ action: 'saveConsumible', id, nombre, precio })
+      body: JSON.stringify({ action: 'saveConsumible', ...cons })
     });
   }
-  
+
   editingConsumibleId = null;
   document.getElementById('btn-mp-consumible').innerHTML = '💾 Guardar Consumible';
   document.getElementById('mp-cons-nombre').value = '';
   document.getElementById('mp-cons-precio').value = '';
-  
+  document.getElementById('mp-cons-stock').value = '';
+
   renderMateriaPrimaTab();
   toast('✅', wasEdit ? 'Consumible actualizado' : 'Consumible guardado');
 }
@@ -2453,22 +2611,28 @@ function abrirVentaDirectaModal() {
         </div>
       </div>
       
-      <div class="form-group" style="margin-bottom:12px">
-        <label class="form-label">📚 ¿Qué vendiste? (Ítem del catálogo)</label>
-        <select class="form-input" id="vd-item" onchange="seleccionarItemVentaDirecta()">
-          <option value="">— Venta libre (escribir detalle) —</option>
-          ${bibliotecaSTL.map(s => {
-            const pv = precioVentaCatalogo(s);
-            return `<option value="${s.id}">${s.item ? '#' + esc(s.item) + ' · ' : ''}${esc(s.nombre)}${pv > 0 ? ' — $' + Math.round(pv).toLocaleString('es-AR') : ''}</option>`;
-          }).join('')}
-        </select>
+      <div class="form-row" style="margin-bottom:12px;display:grid;grid-template-columns:1fr 90px;gap:14px">
+        <div class="form-group">
+          <label class="form-label">📚 ¿Qué vendiste? (Ítem del catálogo)</label>
+          <select class="form-input" id="vd-item" onchange="seleccionarItemVentaDirecta()">
+            <option value="">— Venta libre (escribir detalle) —</option>
+            ${bibliotecaSTL.map(s => {
+              const pv = precioVentaCatalogo(s);
+              return `<option value="${s.id}">${s.item ? '#' + esc(s.item) + ' · ' : ''}${esc(s.nombre)}${pv > 0 ? ' — $' + Math.round(pv).toLocaleString('es-AR') : ''}</option>`;
+            }).join('')}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Cant.</label>
+          <input class="form-input" id="vd-cantidad" type="number" min="1" step="1" value="1" oninput="actualizarPrecioVentaDirecta()">
+        </div>
       </div>
 
       <div class="form-group" style="margin-bottom:12px">
         <label class="form-label">Detalle del trabajo / Venta</label>
         <input class="form-input" id="vd-desc" placeholder="Ej: Venta de llaveros surtidos">
       </div>
-      
+
       <div class="form-row" style="margin-bottom:12px">
         <div class="form-group">
           <label class="form-label">Monto Total ($)</label>
@@ -2512,9 +2676,18 @@ function seleccionarItemVentaDirecta() {
   const s = bibliotecaSTL.find(x => x.id === id);
   if (!s) return;
   document.getElementById('vd-desc').value = (s.item ? '#' + s.item + ' ' : '') + s.nombre;
+  document.getElementById('vd-cantidad').value = 1;
   const pv = precioVentaCatalogo(s);
   if (pv > 0) document.getElementById('vd-precio').value = Math.round(pv);
-  toast('📚', 'Ítem cargado — podés ajustar el precio si querés');
+  toast('📚', 'Ítem cargado — podés ajustar cantidad y precio si querés');
+}
+
+function actualizarPrecioVentaDirecta() {
+  const s = bibliotecaSTL.find(x => x.id === document.getElementById('vd-item')?.value);
+  if (!s) return; // venta libre: la cantidad no recalcula nada, el precio se escribe a mano
+  const cantidad = Math.max(1, parseInt(document.getElementById('vd-cantidad').value) || 1);
+  const pv = precioVentaCatalogo(s);
+  if (pv > 0) document.getElementById('vd-precio').value = Math.round(pv * cantidad);
 }
 
 function guardarVentaDirecta() {
@@ -2524,9 +2697,10 @@ function guardarVentaDirecta() {
   const precio = parseFloat(document.getElementById('vd-precio').value) || 0;
   const adelanto = parseFloat(document.getElementById('vd-adelanto').value) || 0;
   const itemSel = bibliotecaSTL.find(x => x.id === document.getElementById('vd-item')?.value);
-  
+  const cantidad = Math.max(1, parseInt(document.getElementById('vd-cantidad')?.value) || 1);
+
   if (!cliente || !desc || !precio) { toast('⚠️', 'Completá cliente, detalle y precio total'); return; }
-  
+
   let fechaStr = new Date().toLocaleDateString('es-AR');
   if (fecha) {
     const d = new Date(fecha + 'T12:00:00');
@@ -2537,19 +2711,21 @@ function guardarVentaDirecta() {
   if (adelanto >= precio) pago = 'Pagado';
   else if (adelanto > 0) pago = 'Señado';
 
+  const cantidadTag = (itemSel && cantidad > 1) ? ` (x${cantidad})` : '';
+
   const payload = {
     action: 'saveJob',
     fecha: fechaStr,
     cliente,
-    stl: desc,
+    stl: desc + cantidadTag,
     maquina: 'Venta Directa',
     estado: document.getElementById('vd-estado')?.value || 'Pendiente',
     pago: pago,
-    consumibles: '',
+    consumibles: (itemSel?.consumibles || []).map(c => c.nombre + ' $' + Math.round(c.precio)).join(' | ') + ((itemSel?.consumibles?.length && cantidad > 1) ? ` (x${cantidad} c/u)` : ''),
     margen: 'Trabajo Especial',
     precio: precio.toFixed(2),
-    gramos: itemSel ? (parseFloat(itemSel.gramos) || 0) : 0,
-    horas: itemSel ? (parseFloat(itemSel.horas) || 0) : 0,
+    gramos: itemSel ? (parseFloat(itemSel.gramos) || 0) * cantidad : 0,
+    horas: itemSel ? (parseFloat(itemSel.horas) || 0) * cantidad : 0,
     adelanto: adelanto
   };
 
@@ -2557,6 +2733,10 @@ function guardarVentaDirecta() {
 
   if (!config.scriptUrl) {
     allJobs.push(payload);
+    if (itemSel) {
+      descontarStockFilamento(itemSel.materialId, (parseFloat(itemSel.gramos) || 0) * cantidad);
+      descontarStockConsumibles((itemSel.consumibles || []).map(c => ({ id: c.id, nombre: c.nombre, cantidad })));
+    }
     updateDashboard();
     renderJobs();
     toast('💾', 'Venta guardada localmente');
@@ -2571,6 +2751,10 @@ function guardarVentaDirecta() {
     mode: 'no-cors'
   }).then(() => {
     allJobs.push(payload);
+    if (itemSel) {
+      descontarStockFilamento(itemSel.materialId, (parseFloat(itemSel.gramos) || 0) * cantidad);
+      descontarStockConsumibles((itemSel.consumibles || []).map(c => ({ id: c.id, nombre: c.nombre, cantidad })));
+    }
     updateDashboard();
     renderJobs();
     toast('✅', 'Venta Directa guardada exitosamente');
@@ -2698,6 +2882,7 @@ function usarSTL(idOrNombre, gramosOpt, horasOpt) {
     document.getElementById('q-stl').value = idOrNombre;
     document.getElementById('q-gramos').value = gramosOpt || 0;
     document.getElementById('q-horas').value = horasOpt || 0;
+    if (document.getElementById('q-cantidad')) document.getElementById('q-cantidad').value = 1;
     calcQuote();
     cerrarPickerCatalogo();
     toast('📚', 'STL cargado');
@@ -2707,7 +2892,8 @@ function usarSTL(idOrNombre, gramosOpt, horasOpt) {
   document.getElementById('q-stl').value = match.nombre;
   document.getElementById('q-gramos').value = match.gramos;
   document.getElementById('q-horas').value = match.horas;
-  
+  if (document.getElementById('q-cantidad')) document.getElementById('q-cantidad').value = 1;
+
   if (match.materialId && typeof bibliotecaFilamentos !== 'undefined') {
     const mat = bibliotecaFilamentos.find(f => f.id === match.materialId);
     if (mat) {
@@ -2837,7 +3023,8 @@ function limpiarCotizador() {
   document.getElementById('q-stl').value = '';
   document.getElementById('q-gramos').value = '';
   document.getElementById('q-horas').value = '';
-  
+  if (document.getElementById('q-cantidad')) document.getElementById('q-cantidad').value = 1;
+
   document.getElementById('q-rollo').value = '';
   aplicarPLADefault();
   
@@ -2888,10 +3075,57 @@ async function eliminarSTLLib(id) {
   setTimeout(showCatalogoPicker, 50);
 }
 
+// ─── Un trabajo guardado, ¿corresponde a este ítem del catálogo? ───
+function matcheaItemCatalogo(job, s) {
+  if (!job.stl || !s.nombre) return false;
+  if (job.stl === s.nombre) return true;
+  if (s.item && job.stl === ('#' + s.item + ' ' + s.nombre)) return true;
+  return false;
+}
+
+// ─── Ranking de más vendidos (Catálogo) ───
+function renderTopVentasCatalogo() {
+  const card = document.getElementById('cat-top-ventas-card');
+  const list = document.getElementById('cat-top-ventas-list');
+  if (!card || !list) return;
+
+  const stats = bibliotecaSTL.map(s => {
+    const jobs = allJobs.filter(j => matcheaItemCatalogo(j, s));
+    const unidades  = jobs.length;
+    const facturado = jobs.reduce((acc, j) => acc + (parseFloat(j.precio) || 0), 0);
+    const costoUnit = costoBaseCatalogo(s);
+    const ganancia  = facturado - (costoUnit * unidades);
+    return { s, unidades, facturado, ganancia };
+  }).filter(x => x.unidades > 0)
+    .sort((a, b) => b.unidades - a.unidades)
+    .slice(0, 5);
+
+  if (!stats.length) {
+    card.style.display = 'none';
+    return;
+  }
+
+  card.style.display = 'block';
+  list.innerHTML = stats.map((x, i) => `
+    <div style="display:flex;align-items:center;gap:12px;padding:10px 12px;background:var(--dark-card2);border:1px solid var(--border);border-radius:8px;margin-bottom:6px">
+      <div style="font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;color:var(--text-dim);width:24px;text-align:center">${i+1}°</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:600;color:var(--white);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(x.s.nombre)}</div>
+        <div style="font-size:11px;color:var(--text-dim)">${x.unidades} vendido(s) · Facturado $${Math.round(x.facturado).toLocaleString('es-AR')}</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-size:10px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px">Ganancia est.</div>
+        <div style="font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;color:${x.ganancia>=0?'var(--success)':'var(--danger)'}">$${Math.round(x.ganancia).toLocaleString('es-AR')}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
 function renderCatalogoTab() {
   guardarCacheLocal();
   const c = document.getElementById('catalogo-grid');
-  
+  renderTopVentasCatalogo();
+
   const materialSelect = document.getElementById('cat-material');
   if (materialSelect) {
     const currentVal = materialSelect.value;
@@ -3015,10 +3249,7 @@ function renderConsumiblesCatalogo() {
 
 // ─── Precio de venta de un ítem del catálogo ───
 // Si tiene precio fijo cargado, ese manda. Si no, se cotiza por gramos/horas + margen.
-function precioVentaCatalogo(s) {
-  const pf = parseFloat(s.precioFijo) || 0;
-  if (pf > 0) return pf;
-
+function costoBaseCatalogo(s) {
   const gramos = parseFloat(s.gramos) || 0;
   const horas  = parseFloat(s.horas)  || 0;
 
@@ -3030,9 +3261,14 @@ function precioVentaCatalogo(s) {
 
   const maqCosto  = getEnergyCost(0, horas) + horas * getAmortHour(0);
   const consCosto = (s.consumibles || []).reduce((acc, c) => acc + (parseFloat(c.precio) || 0), 0);
-  const costoBase = filamentoCosto + maqCosto + consCosto;
-  const margen    = parseFloat(s.margen) || 0;
+  return filamentoCosto + maqCosto + consCosto;
+}
 
+function precioVentaCatalogo(s) {
+  const pf = parseFloat(s.precioFijo) || 0;
+  if (pf > 0) return pf;
+  const costoBase = costoBaseCatalogo(s);
+  const margen    = parseFloat(s.margen) || 0;
   return costoBase * (1 + margen / 100);
 }
 
@@ -3254,31 +3490,38 @@ function calcQuote() {
   const margenVal = parseFloat(document.getElementById('q-margen').value) || 0;
   const mi        = parseInt(document.getElementById('q-maquina').value)  || 0;
   const rolloG    = config.rolloG || 1000;
+  const cantidad  = Math.max(1, parseInt(document.getElementById('q-cantidad')?.value) || 1);
 
-  const precioPorG     = rollo / rolloG;
-  const costoFilamento = gramos * precioPorG;
-  const costoAmort     = horas * getAmortHour(mi);
-  const costoEnergia   = getEnergyCost(mi, horas);
-  const costoBase      = costoFilamento + costoAmort + costoEnergia;
-  const costoConsumibles = trabajoConsumibles.reduce((s,c) => s + c.precio, 0);
+  // Todo lo de abajo es POR UNIDAD; se multiplica por la cantidad al final.
+  const precioPorG         = rollo / rolloG;
+  const costoFilamentoUnit = gramos * precioPorG;
+  const costoAmortUnit     = horas * getAmortHour(mi);
+  const costoEnergiaUnit   = getEnergyCost(mi, horas);
+  const costoBaseUnit      = costoFilamentoUnit + costoAmortUnit + costoEnergiaUnit;
+  const costoConsumiblesUnit = trabajoConsumibles.reduce((s,c) => s + c.precio, 0);
 
-  let margen = 0;
+  let margenUnit = 0;
   if (margenMode === 'pct') {
-    margen = costoBase * (margenVal / 100);
+    margenUnit = costoBaseUnit * (margenVal / 100);
     const prev = document.getElementById('margen-preview');
-    if (prev) prev.textContent = margenVal > 0 ? '= $' + Math.round(margen).toLocaleString('es-AR') : '';
+    if (prev) prev.textContent = margenVal > 0 ? '= $' + Math.round(margenUnit).toLocaleString('es-AR') : '';
     const det = document.getElementById('q-detail-margen');
     if (det) det.textContent = margenVal + '% sobre costo base';
   } else {
-    margen = margenVal;
-    const pctEq = costoBase > 0 ? Math.round((margen / costoBase) * 100) : 0;
+    margenUnit = margenVal;
+    const pctEq = costoBaseUnit > 0 ? Math.round((margenUnit / costoBaseUnit) * 100) : 0;
     const prev = document.getElementById('margen-preview');
-    if (prev) prev.textContent = (margenVal > 0 && costoBase > 0) ? '= ' + pctEq + '%' : '';
+    if (prev) prev.textContent = (margenVal > 0 && costoBaseUnit > 0) ? '= ' + pctEq + '%' : '';
     const det = document.getElementById('q-detail-margen');
-    if (det) det.textContent = (margenVal > 0 && costoBase > 0) ? `ganancia directa (${pctEq}% del costo)` : 'ganancia directa';
+    if (det) det.textContent = (margenVal > 0 && costoBaseUnit > 0) ? `ganancia directa (${pctEq}% del costo)` : 'ganancia directa';
   }
 
-  const total = costoBase + margen + costoConsumibles;
+  const costoFilamento   = costoFilamentoUnit * cantidad;
+  const costoAmort       = costoAmortUnit * cantidad;
+  const costoEnergia     = costoEnergiaUnit * cantidad;
+  const costoConsumibles = costoConsumiblesUnit * cantidad;
+  const margen           = margenUnit * cantidad;
+  const total            = (costoBaseUnit + margenUnit + costoConsumiblesUnit) * cantidad;
   const fmt   = v => '$' + Math.round(v).toLocaleString('es-AR');
 
   document.getElementById('qr-filamento').textContent = fmt(costoFilamento);
@@ -3286,24 +3529,28 @@ function calcQuote() {
   document.getElementById('qr-energia').textContent   = fmt(costoEnergia);
   document.getElementById('qr-margen').textContent    = fmt(margen);
   document.getElementById('qr-total').textContent     = fmt(total);
-  document.getElementById('qr-total').setAttribute('data-base', costoBase + costoConsumibles);
+  // data-base: costo POR UNIDAD (lo usa usarSTL para calcular el margen $ de un precio fijo)
+  document.getElementById('qr-total').setAttribute('data-base', costoBaseUnit + costoConsumiblesUnit);
 
-  document.getElementById('q-detail-fil').textContent  = `${gramos}g × $${precioPorG.toFixed(2)}/g`;
-  document.getElementById('q-detail-amor').textContent = `${horas}h × $${getAmortHour(mi).toFixed(2)}/h`;
-  document.getElementById('q-detail-ener').textContent = `${(config.machines[mi]?.watts||0)}W × ${horas}h`;
+  document.getElementById('q-detail-fil').textContent  = `${gramos}g × $${precioPorG.toFixed(2)}/g${cantidad>1 ? ` × ${cantidad}u` : ''}`;
+  document.getElementById('q-detail-amor').textContent = `${horas}h × $${getAmortHour(mi).toFixed(2)}/h${cantidad>1 ? ` × ${cantidad}u` : ''}`;
+  document.getElementById('q-detail-ener').textContent = `${(config.machines[mi]?.watts||0)}W × ${horas}h${cantidad>1 ? ` × ${cantidad}u` : ''}`;
+
+  const totalLabel = document.querySelector('#quote-result .total-label');
+  if (totalLabel) totalLabel.textContent = cantidad > 1 ? `💎 Precio Final (${cantidad} unidades)` : '💎 Precio Final';
 
   const consRow = document.getElementById('qr-consumibles-row');
   if (consRow) {
     if (costoConsumibles > 0) {
       consRow.style.display = 'flex';
       document.getElementById('qr-consumibles').textContent  = fmt(costoConsumibles);
-      document.getElementById('q-detail-cons').textContent   = trabajoConsumibles.map(c => c.nombre).join(', ');
+      document.getElementById('q-detail-cons').textContent   = trabajoConsumibles.map(c => c.nombre).join(', ') + (cantidad>1 ? ` × ${cantidad}u` : '');
     } else {
       consRow.style.display = 'none';
     }
   }
 
-  return { costoFilamento, costoAmort, costoEnergia, margen, costoConsumibles, total, precioPorG };
+  return { costoFilamento, costoAmort, costoEnergia, margen, costoConsumibles, total, precioPorG, cantidad, gramosTotal: gramos * cantidad, horasTotal: horas * cantidad };
 }
 
 // ─── Cambiar estado de trabajo (idx = índice real en allJobs) ───
@@ -3364,7 +3611,7 @@ async function saveJob() {
       return new Date().toLocaleDateString('es-AR');
     })(),
     cliente,
-    stl,
+    stl: stl + (q.cantidad > 1 ? ` (x${q.cantidad})` : ''),
     maquina: config.machines[mi]?.name || `Máquina ${mi+1}`,
     estado: 'Pendiente',
     pago: (() => {
@@ -3373,11 +3620,11 @@ async function saveJob() {
       if (ad > 0) return 'Señado';
       return 'Pendiente';
     })(),
-    consumibles: trabajoConsumibles.map(c => c.nombre + ' $' + Math.round(c.precio)).join(' | '),
+    consumibles: trabajoConsumibles.map(c => c.nombre + ' $' + Math.round(c.precio)).join(' | ') + (trabajoConsumibles.length && q.cantidad > 1 ? ` (x${q.cantidad} c/u)` : ''),
     margen: margenMode === 'pct' ? (document.getElementById('q-margen').value + '%') : ('$' + document.getElementById('q-margen').value),
     precio: q.total.toFixed(2),
-    gramos: document.getElementById('q-gramos').value,
-    horas: document.getElementById('q-horas').value,
+    gramos: q.gramosTotal,
+    horas: q.horasTotal,
     adelanto: parseFloat(document.getElementById('q-adelanto')?.value) || 0,
     prioridad: document.getElementById('q-prioridad')?.value || 'Media',
     fechaEntrega: (() => {
@@ -3390,12 +3637,14 @@ async function saveJob() {
   };
 
   const filUsado = document.getElementById('q-filamento-select')?.value;
-  const gramosUsados = parseFloat(document.getElementById('q-gramos').value) || 0;
+  const gramosUsados = q.gramosTotal;
+  const consumiblesUsados = trabajoConsumibles.map(c => ({ id: c.id, nombre: c.nombre, cantidad: q.cantidad }));
 
   if (!config.scriptUrl) {
     // Guardado local si no hay URL configurada
     allJobs.push(payload);
     descontarStockFilamento(filUsado, gramosUsados);
+    descontarStockConsumibles(consumiblesUsados);
     updateDashboard();
     renderJobs();
     toast('💾', 'Guardado localmente (configure Apps Script URL para la nube)');
@@ -3412,6 +3661,7 @@ async function saveJob() {
     });
     allJobs.push(payload);
     descontarStockFilamento(filUsado, gramosUsados);
+    descontarStockConsumibles(consumiblesUsados);
     updateDashboard();
     renderJobs();
     toast('✅', 'Trabajo guardado en Google Sheets');
@@ -3606,7 +3856,10 @@ function renderJobs() {
         }
       </td>
       <td>
-        <button onclick="abrirEditar(${idx})" style="background:rgba(26,159,212,0.1);border:1px solid var(--border-blue);color:var(--blue-bright);border-radius:6px;padding:4px 10px;cursor:pointer;font-size:11px;font-family:'Exo 2',sans-serif">✏ Editar</button>
+        <div style="display:flex;gap:6px">
+          <button onclick="abrirEditar(${idx})" style="background:rgba(26,159,212,0.1);border:1px solid var(--border-blue);color:var(--blue-bright);border-radius:6px;padding:4px 10px;cursor:pointer;font-size:11px;font-family:'Exo 2',sans-serif">✏ Editar</button>
+          <button onclick="duplicarTrabajo(${idx})" title="Duplicar este pedido" style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);color:var(--success);border-radius:6px;padding:4px 10px;cursor:pointer;font-size:11px;font-family:'Exo 2',sans-serif">⧉ Duplicar</button>
+        </div>
       </td>
       <td>
         ${j.estado === 'Listo'
@@ -3637,6 +3890,63 @@ async function testConnection() {
   } catch {
     el.innerHTML = '❌ <span style="color:var(--danger)">Sin respuesta</span>';
   }
+}
+
+// ─── Duplicar un pedido (lo abre listo en el cotizador para ajustar y guardar) ───
+function duplicarTrabajo(idx) {
+  const job = allJobs[idx];
+  if (!job) return;
+
+  showSection('cotizar');
+
+  // Si el trabajo corresponde a un ítem del catálogo, reusamos esa lógica
+  // (carga material, consumibles y margen/precio fijo correctamente).
+  const match = bibliotecaSTL.find(s => matcheaItemCatalogo(job, s));
+  if (match) {
+    usarSTL(match.id);
+  } else {
+    document.getElementById('q-item').value = '';
+    document.getElementById('q-stl').value = job.stl || '';
+    document.getElementById('q-gramos').value = job.gramos || '';
+    document.getElementById('q-horas').value = job.horas || '';
+
+    // Reconstruir consumibles a partir del texto guardado (ej: "Cadenita $300 | Imán $500")
+    trabajoConsumibles = [];
+    (job.consumibles || '').split('|').map(s => s.trim()).filter(Boolean).forEach(txt => {
+      const nombre = txt.split('$')[0].trim();
+      const c = bibliotecaConsumibles.find(x => x.nombre === nombre);
+      if (c) trabajoConsumibles.push({ id: c.id, nombre: c.nombre, precio: c.precio });
+    });
+    renderConsumiblesDelTrabajo();
+
+    // Margen: "100%" → modo %, "$5000" → modo $, si no se reconoce se deja el default
+    const m = (job.margen || '').trim();
+    if (m.endsWith('%')) {
+      setMargenMode('pct');
+      document.getElementById('q-margen').value = parseFloat(m) || 100;
+    } else if (m.startsWith('$')) {
+      setMargenMode('ars');
+      document.getElementById('q-margen').value = parseFloat(m.slice(1)) || 0;
+    }
+  }
+
+  // Máquina (si coincide con alguna configurada)
+  const mi = config.machines.findIndex(m => m.name === job.maquina);
+  if (mi >= 0) document.getElementById('q-maquina').value = mi;
+
+  // Cliente, notas y prioridad se heredan; fecha y entrega quedan en blanco (es un pedido nuevo)
+  document.getElementById('q-cliente').value = job.cliente || '';
+  document.getElementById('q-notas').value = job.observaciones || '';
+  document.getElementById('q-prioridad').value = job.prioridad || 'Media';
+  document.getElementById('q-entrega').value = '';
+  document.getElementById('q-adelanto').value = '';
+
+  const today = new Date();
+  document.getElementById('q-fecha').value = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+
+  calcQuote();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  toast('⧉', 'Pedido duplicado — revisá los datos y guardalo');
 }
 
 // ─── Edición de trabajos (idx = índice real en allJobs) ───
@@ -3940,9 +4250,9 @@ function enviarPresupuestoWhatsApp() {
   const fmt = v => '$' + Math.round(v).toLocaleString('es-AR');
 
   let msg = `¡Hola${cliente ? ' ' + cliente : ''}! 👋 Te paso el presupuesto de *ZD3D*:\n\n`;
-  msg += `🖨️ *${stl || 'Impresión 3D'}*\n`;
-  if (gramos > 0) msg += `⚖️ Material: ${gramos}g\n`;
-  if (horas > 0)  msg += `⏱️ Tiempo de impresión: ${horas}h\n`;
+  msg += `🖨️ *${stl || 'Impresión 3D'}*${q.cantidad > 1 ? ` (x${q.cantidad} unidades)` : ''}\n`;
+  if (gramos > 0) msg += `⚖️ Material: ${gramos}g${q.cantidad > 1 ? ' c/u' : ''}\n`;
+  if (horas > 0)  msg += `⏱️ Tiempo de impresión: ${horas}h${q.cantidad > 1 ? ' c/u' : ''}\n`;
   if (q.costoConsumibles > 0) msg += `🧰 Extras: ${fmt(q.costoConsumibles)}\n`;
   msg += `\n💎 *Total: ${fmt(q.total)}*\n`;
   const adelanto = parseFloat(document.getElementById('q-adelanto')?.value) || 0;
@@ -3978,6 +4288,34 @@ function descontarStockFilamento(filamentoId, gramos) {
   const restante = fil.stockG;
   if (restante <= 0) toast('🚨', `¡Se acabó el rollo de ${fil.tipo}! Reponé stock`);
   else if (restante < 150) toast('⚠️', `Quedan solo ${Math.round(restante)}g de ${fil.tipo}`);
+}
+
+// ─── Descuento de stock de consumibles (recibe [{id, nombre, cantidad}] o lista de ids con cantidad 1 c/u) ───
+function descontarStockConsumibles(listaUsados) {
+  if (!listaUsados || !listaUsados.length) return;
+  listaUsados.forEach(u => {
+    const c = bibliotecaConsumibles.find(x => x.id === u.id);
+    if (!c || c.stock === undefined || c.stock === null || c.stock === '') return; // sin seguimiento de stock
+
+    c.stock = Math.max(0, (parseFloat(c.stock) || 0) - (u.cantidad || 1));
+
+    if (config.scriptUrl) {
+      fetch(config.scriptUrl, {
+        method: 'POST', mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({ action: 'deleteConsumible', id: c.id })
+      }).catch(()=>{});
+      fetch(config.scriptUrl, {
+        method: 'POST', mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({ action: 'saveConsumible', ...c })
+      }).catch(()=>{});
+    }
+
+    if (c.stock <= 0) toast('🚨', `¡Se acabó "${c.nombre}"! Reponé stock`);
+    else if (c.stock < 5) toast('⚠️', `Quedan solo ${Math.round(c.stock)} de "${c.nombre}"`);
+  });
+  guardarCacheLocal();
 }
 
 // ─── Toast ───
