@@ -624,21 +624,38 @@
   </div>
 
   <div class="grid-dashboard-3">
-    <!-- COL 1: REGISTRO RÁPIDO -->
+    <!-- COL 1: VENTA RÁPIDA -->
     <div class="card" style="padding:20px">
-      <div class="card-title" style="margin-bottom:12px"><span class="dot"></span> Registro Express</div>
+      <div class="card-title" style="margin-bottom:12px"><span class="dot"></span> Venta Rápida</div>
       <div class="form-group" style="margin-bottom:0">
         <input class="form-input" id="dash-cliente" placeholder="Nombre del Cliente" style="margin-bottom:8px">
-        <input class="form-input" id="dash-stl" placeholder="Detalle (Ej: Llavero 3D)" style="margin-bottom:8px">
-        <div class="form-row" style="margin-bottom:8px; gap:8px">
-          <input class="form-input" id="dash-gramos" type="number" placeholder="Gramos" oninput="calcQuickQuote()">
-          <input class="form-input" id="dash-horas" type="number" placeholder="Horas" oninput="calcQuickQuote()">
+
+        <div id="dash-producto-elegido" style="display:none;gap:10px;align-items:center;background:var(--dark-card2);border:1px solid var(--border-blue);border-radius:8px;padding:8px 10px;margin-bottom:8px">
+          <div id="dash-producto-img" style="width:40px;height:40px;border-radius:6px;background:var(--dark-bg);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;border:1px solid var(--border);font-size:18px;opacity:.6">📦</div>
+          <div style="flex:1;min-width:0">
+            <div id="dash-producto-nombre" style="font-size:12px;font-weight:600;color:var(--white);white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
+            <div style="font-size:11px;color:var(--text-dim);display:flex;align-items:center;gap:4px">Cant:
+              <input class="form-input" id="dash-cantidad" type="number" min="1" step="1" value="1" oninput="actualizarPrecioDashCatalogo()" style="width:48px;padding:2px 6px;font-size:11px">
+            </div>
+          </div>
+          <button onclick="quitarProductoDash()" title="Quitar" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:14px;flex-shrink:0">✕</button>
         </div>
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding:10px 14px; background:var(--dark-card2); border:1px solid var(--border); border-radius:8px">
-          <span style="font-size:12px; color:var(--text-dim); text-transform:uppercase; letter-spacing:1px; font-weight:600">Total Est.:</span>
-          <span id="dash-precio-preview" style="font-family:'Rajdhani',sans-serif; font-size:24px; font-weight:700; color:var(--success)">$0</span>
+
+        <button class="btn btn-secondary" style="width:100%;justify-content:center;margin-bottom:8px;border-color:var(--warning);color:var(--warning)" onclick="abrirCatalogoPickerDash()">📚 Elegir del Catálogo</button>
+
+        <div id="dash-libre-fields">
+          <input class="form-input" id="dash-stl" placeholder="Detalle (Ej: Llavero 3D)" style="margin-bottom:8px">
+          <div class="form-row" style="margin-bottom:8px; gap:8px">
+            <input class="form-input" id="dash-gramos" type="number" placeholder="Gramos" oninput="calcQuickQuote()">
+            <input class="form-input" id="dash-horas" type="number" placeholder="Horas" oninput="calcQuickQuote()">
+          </div>
         </div>
-        <button class="btn btn-primary" style="width:100%; justify-content:center; background:linear-gradient(135deg, #10b981, #34d399); color:black" onclick="saveQuickJob()">➕ Agregar Trabajo</button>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:12px; padding:8px 14px; background:var(--dark-card2); border:1px solid var(--border); border-radius:8px">
+          <span style="font-size:12px; color:var(--text-dim); text-transform:uppercase; letter-spacing:1px; font-weight:600; flex-shrink:0">Total Est.:</span>
+          <input id="dash-precio-preview" type="number" style="font-family:'Rajdhani',sans-serif; font-size:22px; font-weight:700; color:var(--success); background:none; border:none; text-align:right; width:100%; outline:none" placeholder="0">
+        </div>
+        <button class="btn btn-primary" style="width:100%; justify-content:center; background:linear-gradient(135deg, #10b981, #34d399); color:black" onclick="saveQuickJob()">➕ Registrar Venta</button>
       </div>
     </div>
 
@@ -885,6 +902,9 @@
         <button class="btn" style="width:100%;margin-top:16px;justify-content:center;background:linear-gradient(135deg,#128c4b,#25d366);color:white;box-shadow:0 4px 15px rgba(37,211,102,0.25)" onclick="enviarPresupuestoWhatsApp()">
           📱 Enviar presupuesto por WhatsApp
         </button>
+        <button class="btn" id="btn-presupuesto-pdf" style="width:100%;margin-top:10px;justify-content:center;background:linear-gradient(135deg,var(--blue-dark),var(--blue));color:white;box-shadow:0 4px 15px rgba(26,159,212,0.25)" onclick="enviarPresupuestoPDF()">
+          📄 Presupuesto en PDF para el cliente
+        </button>
       </div>
 
       <div class="card" style="margin-top:16px">
@@ -1013,7 +1033,10 @@
 
 <!-- ──────────── PROMOS Y ESPECIALES ──────────── -->
 <section id="sec-promos" class="section">
-  <div class="page-title">Promos y Especiales <span class="badge">EXTRAS</span></div>
+  <div class="page-title" style="justify-content:space-between;flex-wrap:wrap;gap:12px">
+    <div>Promos y Especiales <span class="badge">EXTRAS</span></div>
+    <button class="btn btn-secondary btn-sm" onclick="abrirAumentoMasivoModal()" style="border-color:var(--warning);color:var(--warning)">📈 Aumento Masivo</button>
+  </div>
 
   <div class="grid-2">
     <!-- TRABAJOS ESPECIALES -->
@@ -1152,7 +1175,10 @@
 
 <!-- ──────────── CATALOGO STL ──────────── -->
 <section id="sec-catalogo" class="section">
-  <div class="page-title">Catálogo STL <span class="badge">BIBLIOTECA</span></div>
+  <div class="page-title" style="justify-content:space-between;flex-wrap:wrap;gap:12px">
+    <div>Catálogo STL <span class="badge">BIBLIOTECA</span></div>
+    <button class="btn btn-secondary btn-sm" onclick="abrirAumentoMasivoModal()" style="border-color:var(--warning);color:var(--warning)">📈 Aumento Masivo</button>
+  </div>
 
   <div class="card" style="margin-bottom:20px">
     <div class="card-title"><span class="dot"></span> Agregar Nuevo Artículo</div>
@@ -1890,7 +1916,7 @@ function updateDashboard() {
       const fe = parseFechaDMY(j.fechaEntrega);
       const vencido = fe && fe < hoyDash;
       return `
-      <div class="dash-list-item">
+      <div class="dash-list-item" onclick="abrirEditar(${j.originalIdx})" style="cursor:pointer" title="Ver todas las opciones de este trabajo">
         <div style="flex:1; min-width:0; margin-right:8px">
           <div style="font-size:13px; font-weight:600; color:var(--white); white-space:nowrap; overflow:hidden; text-overflow:ellipsis">${j.prioridad ? pd.icon + ' ' : ''}${esc(j.cliente) || 'Sin nombre'}</div>
           <div style="font-size:11px; color:var(--text-dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis">${esc(j.stl)}</div>
@@ -1900,8 +1926,8 @@ function updateDashboard() {
         <div style="display:flex; gap:6px; align-items:center; flex-shrink:0">
           <span class="job-status ${(j.estado||'').toLowerCase()}" style="font-size:10px; padding:2px 6px">${esc(j.estado)}</span>
           ${j.estado === 'Pendiente' ?
-            `<button onclick="cambiarEstado(${j.originalIdx}, 'Imprimiendo')" class="btn btn-secondary btn-sm" style="padding:4px 8px; font-size:10px; border-color:var(--blue-bright); color:var(--blue-bright)" title="Comenzar">▶</button>` :
-            `<button onclick="cambiarEstado(${j.originalIdx}, 'Listo')" class="btn btn-secondary btn-sm" style="padding:4px 8px; font-size:10px; border-color:var(--success); color:var(--success)" title="Finalizar">✓</button>`
+            `<button onclick="event.stopPropagation(); cambiarEstado(${j.originalIdx}, 'Imprimiendo')" class="btn btn-secondary btn-sm" style="padding:4px 8px; font-size:10px; border-color:var(--blue-bright); color:var(--blue-bright)" title="Comenzar">▶</button>` :
+            `<button onclick="event.stopPropagation(); cambiarEstado(${j.originalIdx}, 'Listo')" class="btn btn-secondary btn-sm" style="padding:4px 8px; font-size:10px; border-color:var(--success); color:var(--success)" title="Finalizar">✓</button>`
           }
         </div>
       </div>
@@ -1919,28 +1945,31 @@ function updateDashboard() {
     ddl.innerHTML = debtors.map(j => {
       const debe = parseFloat(j.precio||0) - parseFloat(j.adelanto||0);
       return `
-      <div class="dash-list-item" style="border-left: 3px solid var(--danger)">
+      <div class="dash-list-item" onclick="abrirEditar(${j.originalIdx})" style="border-left: 3px solid var(--danger); cursor:pointer" title="Ver todas las opciones de este trabajo">
         <div style="flex:1; min-width:0; margin-right:8px">
           <div style="font-size:13px; font-weight:600; color:var(--white); white-space:nowrap; overflow:hidden; text-overflow:ellipsis">${esc(j.cliente) || 'Sin nombre'}</div>
           <div style="font-size:11px; color:var(--danger)">Debe: $${debe.toLocaleString('es-AR')}</div>
         </div>
-        <button onclick="cambiarPago(${j.originalIdx}, 'Pagado')" class="btn btn-secondary btn-sm" style="padding:4px 8px; font-size:10px; background:rgba(34,197,94,0.1); border-color:rgba(34,197,94,0.3); color:var(--success); flex-shrink:0" title="Cobrar Todo">Cobrar</button>
+        <button onclick="event.stopPropagation(); cambiarPago(${j.originalIdx}, 'Pagado')" class="btn btn-secondary btn-sm" style="padding:4px 8px; font-size:10px; background:rgba(34,197,94,0.1); border-color:rgba(34,197,94,0.3); color:var(--success); flex-shrink:0" title="Cobrar Todo">Cobrar</button>
       </div>
     `}).join('');
   }
 }
 
-// ─── Registro Rápido (Dashboard) ───
+// ─── Venta Rápida (Dashboard) ───
 let quickQuoteValue = 0;
+let dashProductoSeleccionado = null;
+
 function calcQuickQuote() {
+  if (dashProductoSeleccionado) return; // el precio ya se calcula por catálogo
   const gramos = parseFloat(document.getElementById('dash-gramos').value) || 0;
   const horas  = parseFloat(document.getElementById('dash-horas').value) || 0;
   const mi     = 0; // Por defecto Máquina 0
   const rolloG = config.rolloG || 1000;
-  
+
   let precioRollo = 18000;
   if (typeof bibliotecaFilamentos !== 'undefined' && bibliotecaFilamentos.length > 0) {
-    const pla = bibliotecaFilamentos.find(f => f.nombre.toLowerCase().includes('pla'));
+    const pla = bibliotecaFilamentos.find(f => (f.tipo||'').toLowerCase().includes('pla'));
     precioRollo = pla ? pla.precio : bibliotecaFilamentos[0].precio;
   }
 
@@ -1948,22 +1977,130 @@ function calcQuickQuote() {
   const costoAmort     = horas * getAmortHour(mi);
   const costoEnergia   = getEnergyCost(mi, horas);
   const costoBase      = costoFilamento + costoAmort + costoEnergia;
-  
+
   // Asumimos margen de 100% por defecto para quick add
-  const margen = costoBase * 1.0; 
+  const margen = costoBase * 1.0;
   quickQuoteValue = costoBase + margen;
 
-  document.getElementById('dash-precio-preview').textContent = '$' + Math.round(quickQuoteValue).toLocaleString('es-AR');
+  document.getElementById('dash-precio-preview').value = Math.round(quickQuoteValue);
+}
+
+// Modal: elegir producto del catálogo para la Venta Rápida del Dashboard
+function abrirCatalogoPickerDash() {
+  document.getElementById('catalogo-picker-dash-modal')?.remove();
+  const modal = document.createElement('div');
+  modal.id = 'catalogo-picker-dash-modal';
+  modal.className = 'edit-modal-overlay';
+  modal.style.zIndex = '9999';
+
+  const inner = document.createElement('div');
+  inner.className = 'edit-modal';
+  inner.style.maxWidth = '480px';
+  inner.innerHTML = `
+    <div class="edit-modal-title">📚 Elegir Producto del Catálogo
+      <button onclick="document.getElementById('catalogo-picker-dash-modal').remove()" style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:16px">✕</button>
+    </div>
+    <input class="form-input" id="dash-cat-buscar" placeholder="🔎 Buscar producto..." style="margin-bottom:12px" oninput="filtrarCatalogoDash()">
+    <div id="dash-cat-lista" style="max-height:360px;overflow-y:auto;display:flex;flex-direction:column;gap:8px"></div>
+  `;
+  modal.appendChild(inner);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  document.body.appendChild(modal);
+  renderCatalogoDashLista(bibliotecaSTL);
+  setTimeout(() => document.getElementById('dash-cat-buscar')?.focus(), 50);
+}
+
+function renderCatalogoDashLista(lista) {
+  const cont = document.getElementById('dash-cat-lista');
+  if (!cont) return;
+  if (!lista.length) {
+    cont.innerHTML = '<div class="empty-state" style="padding:20px"><div class="empty-icon" style="font-size:28px">📦</div><p style="font-size:12px">Sin resultados</p></div>';
+    return;
+  }
+  cont.innerHTML = lista.map(s => {
+    const pv = precioVentaCatalogo(s);
+    return `
+    <div onclick="seleccionarProductoDash('${s.id}')" style="cursor:pointer;background:var(--dark-card2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;display:flex;gap:10px;align-items:center;transition:border-color .2s" onmouseover="this.style.borderColor='rgba(26,159,212,0.5)'" onmouseout="this.style.borderColor='var(--border)'">
+      <div style="width:44px;height:44px;border-radius:6px;background:var(--dark-bg);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;border:1px solid var(--border)">
+        ${s.imagen ? `<img src="${esc(s.imagen)}" style="width:100%;height:100%;object-fit:cover">` : '<span style="font-size:18px;opacity:0.3">📦</span>'}
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:600;color:var(--white);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${s.item ? '#' + esc(s.item) + ' · ' : ''}${esc(s.nombre)}</div>
+        <div style="font-size:11px;color:var(--text-dim)">${s.gramos}g | ${s.horas}h</div>
+      </div>
+      ${pv > 0 ? `<div style="font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;color:var(--success);flex-shrink:0">$${Math.round(pv).toLocaleString('es-AR')}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function filtrarCatalogoDash() {
+  const q = (document.getElementById('dash-cat-buscar').value || '').toLowerCase();
+  const filtrado = bibliotecaSTL.filter(s => (s.nombre||'').toLowerCase().includes(q) || (s.item||'').toLowerCase().includes(q));
+  renderCatalogoDashLista(filtrado);
+}
+
+function seleccionarProductoDash(id) {
+  const s = bibliotecaSTL.find(x => x.id === id);
+  if (!s) return;
+  dashProductoSeleccionado = s;
+
+  document.getElementById('dash-libre-fields').style.display = 'none';
+  document.getElementById('dash-stl').value = '';
+  document.getElementById('dash-gramos').value = '';
+  document.getElementById('dash-horas').value = '';
+
+  const chip = document.getElementById('dash-producto-elegido');
+  chip.style.display = 'flex';
+  document.getElementById('dash-producto-nombre').textContent = (s.item ? '#' + s.item + ' · ' : '') + s.nombre;
+  document.getElementById('dash-producto-img').innerHTML = s.imagen ? `<img src="${s.imagen}" style="width:100%;height:100%;object-fit:cover">` : '📦';
+  document.getElementById('dash-cantidad').value = 1;
+
+  actualizarPrecioDashCatalogo();
+  document.getElementById('catalogo-picker-dash-modal')?.remove();
+  toast('📚', 'Producto cargado — ajustá cantidad o precio si querés');
+}
+
+function actualizarPrecioDashCatalogo() {
+  if (!dashProductoSeleccionado) return;
+  const cantidad = Math.max(1, parseInt(document.getElementById('dash-cantidad').value) || 1);
+  const pv = precioVentaCatalogo(dashProductoSeleccionado);
+  quickQuoteValue = pv * cantidad;
+  document.getElementById('dash-precio-preview').value = Math.round(quickQuoteValue);
+}
+
+function quitarProductoDash() {
+  dashProductoSeleccionado = null;
+  document.getElementById('dash-producto-elegido').style.display = 'none';
+  document.getElementById('dash-libre-fields').style.display = 'block';
+  document.getElementById('dash-precio-preview').value = '';
+  quickQuoteValue = 0;
+  calcQuickQuote();
 }
 
 async function saveQuickJob() {
   const cliente = document.getElementById('dash-cliente').value.trim();
-  const stl = document.getElementById('dash-stl').value.trim();
-  const gramos = document.getElementById('dash-gramos').value;
-  const horas = document.getElementById('dash-horas').value;
+  if (!cliente) { toast('⚠️', 'Complete el nombre del cliente'); return; }
 
-  if (!cliente || !stl) { toast('⚠️', 'Complete cliente y detalle'); return; }
-  if (!gramos || !horas) { toast('⚠️', 'Complete gramos y horas'); return; }
+  let stl, gramos, horas, consumibles = '';
+  let cantidad = 1;
+  const precio = parseFloat(document.getElementById('dash-precio-preview').value) || 0;
+  const productoVendido = dashProductoSeleccionado;
+
+  if (productoVendido) {
+    cantidad = Math.max(1, parseInt(document.getElementById('dash-cantidad').value) || 1);
+    stl = (productoVendido.item ? '#' + productoVendido.item + ' ' : '') + productoVendido.nombre + (cantidad > 1 ? ` (x${cantidad})` : '');
+    gramos = (parseFloat(productoVendido.gramos) || 0) * cantidad;
+    horas = (parseFloat(productoVendido.horas) || 0) * cantidad;
+    consumibles = (productoVendido.consumibles || []).map(c => c.nombre + ' $' + Math.round(c.precio)).join(' | ') + ((productoVendido.consumibles?.length && cantidad > 1) ? ` (x${cantidad} c/u)` : '');
+  } else {
+    stl = document.getElementById('dash-stl').value.trim();
+    gramos = document.getElementById('dash-gramos').value;
+    horas = document.getElementById('dash-horas').value;
+    if (!stl) { toast('⚠️', 'Complete el detalle del trabajo'); return; }
+    if (!gramos || !horas) { toast('⚠️', 'Complete gramos y horas'); return; }
+  }
+
+  if (!precio) { toast('⚠️', 'El precio no puede ser $0'); return; }
 
   const d = new Date();
   const fechaStr = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
@@ -1976,20 +2113,28 @@ async function saveQuickJob() {
     maquina: config.machines[0]?.name || 'Máquina 1',
     estado: 'Pendiente',
     pago: 'Pendiente',
-    consumibles: '',
-    margen: '100%',
-    precio: quickQuoteValue.toFixed(2),
+    consumibles,
+    margen: productoVendido ? 'Catálogo' : '100%',
+    precio: precio.toFixed(2),
     gramos: gramos,
     horas: horas,
     adelanto: 0,
   };
 
-  if (!config.scriptUrl) {
+  const finalizarVenta = () => {
     allJobs.push(payload);
+    if (productoVendido) {
+      descontarStockFilamento(productoVendido.materialId, (parseFloat(productoVendido.gramos) || 0) * cantidad);
+      descontarStockConsumibles((productoVendido.consumibles || []).map(c => ({ id: c.id, nombre: c.nombre, cantidad })));
+    }
     updateDashboard();
     renderJobs();
     limpiarQuickJob();
-    toast('💾', 'Trabajo rápido guardado localmente');
+  };
+
+  if (!config.scriptUrl) {
+    finalizarVenta();
+    toast('💾', 'Venta guardada localmente');
     return;
   }
 
@@ -2001,11 +2146,8 @@ async function saveQuickJob() {
       headers: { 'Content-Type': 'text/plain' },
       mode: 'no-cors'
     });
-    allJobs.push(payload);
-    updateDashboard();
-    renderJobs();
-    limpiarQuickJob();
-    toast('✅', 'Trabajo rápido guardado');
+    finalizarVenta();
+    toast('✅', 'Venta registrada');
   } catch (err) {
     toast('❌', 'Error al guardar');
   }
@@ -2016,7 +2158,7 @@ function limpiarQuickJob() {
   document.getElementById('dash-stl').value = '';
   document.getElementById('dash-gramos').value = '';
   document.getElementById('dash-horas').value = '';
-  calcQuickQuote();
+  quitarProductoDash();
 }
 
 // ─── Máquinas ───
@@ -3468,6 +3610,140 @@ async function eliminarItemCatalogoTab(id) {
   toast('✅', 'Ítem eliminado');
 }
 
+// ─── Aumento masivo de precios (precios fijos del catálogo + promos) ───
+function abrirAumentoMasivoModal() {
+  document.getElementById('aumento-masivo-modal')?.remove();
+  const nFijos  = bibliotecaSTL.filter(s => parseFloat(s.precioFijo) > 0).length;
+  const nPromos = bibliotecaPromos.filter(p => parseFloat(p.precio) > 0).length;
+  if (!nFijos && !nPromos) { toast('⚠️', 'No hay precios fijos ni promos para ajustar'); return; }
+
+  const modal = document.createElement('div');
+  modal.id = 'aumento-masivo-modal';
+  modal.className = 'edit-modal-overlay';
+  modal.style.zIndex = '9999';
+
+  modal.innerHTML = `
+    <div class="edit-modal" style="max-width:480px">
+      <div class="edit-modal-title">📈 Aumento Masivo de Precios
+        <button onclick="document.getElementById('aumento-masivo-modal').remove()" style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:16px">✕</button>
+      </div>
+
+      <div style="font-size:12px;color:var(--text-dim);line-height:1.6;margin-bottom:14px">
+        Ajusta de una sola vez los <b style="color:var(--white)">precios fijos</b> del catálogo y las <b style="color:var(--white)">promos</b>. Los ítems que se cotizan por material + margen no se tocan: esos ya se actualizan solos al cambiar el precio del filamento.
+      </div>
+
+      <div class="form-row" style="margin-bottom:12px">
+        <div class="form-group">
+          <label class="form-label">Ajuste (%)</label>
+          <input class="form-input" id="am-pct" type="number" placeholder="Ej: 15 (negativo baja)" oninput="previewAumentoMasivo()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Redondear a</label>
+          <select class="form-input" id="am-round" onchange="previewAumentoMasivo()">
+            <option value="1">$1 (exacto)</option>
+            <option value="100" selected>$100</option>
+            <option value="500">$500</option>
+            <option value="1000">$1.000</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:16px;margin-bottom:12px">
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text);cursor:pointer">
+          <input type="checkbox" id="am-check-cat" ${nFijos ? 'checked' : 'disabled'} onchange="previewAumentoMasivo()">
+          Catálogo con precio fijo (${nFijos})
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text);cursor:pointer">
+          <input type="checkbox" id="am-check-promo" ${nPromos ? 'checked' : 'disabled'} onchange="previewAumentoMasivo()">
+          Promos (${nPromos})
+        </label>
+      </div>
+
+      <div id="am-preview" style="max-height:200px;overflow-y:auto;background:var(--dark-card2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:14px"></div>
+
+      <button class="btn btn-primary" id="am-aplicar-btn" style="width:100%;justify-content:center" onclick="aplicarAumentoMasivo()">📈 Aplicar Ajuste</button>
+    </div>`;
+
+  document.body.appendChild(modal);
+  previewAumentoMasivo();
+  document.getElementById('am-pct').focus();
+}
+
+// Calcula los cambios según lo elegido en el modal (no modifica nada todavía)
+function _cambiosAumentoMasivo() {
+  const pct  = parseFloat(document.getElementById('am-pct').value) || 0;
+  const step = parseInt(document.getElementById('am-round').value) || 1;
+  const redondear = v => Math.max(step, Math.round(v / step) * step);
+  const cambios = [];
+  if (document.getElementById('am-check-cat').checked) {
+    bibliotecaSTL.forEach(s => {
+      const pf = parseFloat(s.precioFijo) || 0;
+      if (pf > 0) cambios.push({ tipo: 'cat', obj: s, nombre: s.nombre, antes: pf, despues: redondear(pf * (1 + pct / 100)) });
+    });
+  }
+  if (document.getElementById('am-check-promo').checked) {
+    bibliotecaPromos.forEach(p => {
+      const pr = parseFloat(p.precio) || 0;
+      if (pr > 0) cambios.push({ tipo: 'promo', obj: p, nombre: p.nombre, antes: pr, despues: redondear(pr * (1 + pct / 100)) });
+    });
+  }
+  return { pct, cambios };
+}
+
+function previewAumentoMasivo() {
+  const box = document.getElementById('am-preview');
+  if (!box) return;
+  const { pct, cambios } = _cambiosAumentoMasivo();
+  if (!cambios.length) {
+    box.innerHTML = '<div style="font-size:12px;color:var(--text-dim);text-align:center;padding:8px 0">Nada seleccionado para ajustar</div>';
+    return;
+  }
+  if (!pct) {
+    box.innerHTML = `<div style="font-size:12px;color:var(--text-dim);text-align:center;padding:8px 0">${cambios.length} precio${cambios.length === 1 ? '' : 's'} seleccionado${cambios.length === 1 ? '' : 's'} — ingresá el porcentaje para ver el resultado</div>`;
+    return;
+  }
+  box.innerHTML = cambios.map(c => `
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:4px 0;border-bottom:1px solid var(--border);font-size:12px">
+      <span style="color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.tipo === 'promo' ? '🏷️ ' : ''}${esc(c.nombre)}</span>
+      <span style="white-space:nowrap;font-family:'Rajdhani',sans-serif;font-weight:600">
+        <span style="color:var(--text-dim)">$${Math.round(c.antes).toLocaleString('es-AR')}</span>
+        <span style="color:var(--text-dim)"> → </span>
+        <span style="color:${c.despues >= c.antes ? 'var(--success)' : 'var(--danger)'}">$${c.despues.toLocaleString('es-AR')}</span>
+      </span>
+    </div>`).join('');
+}
+
+async function aplicarAumentoMasivo() {
+  const { pct, cambios } = _cambiosAumentoMasivo();
+  if (!pct) { toast('⚠️', 'Ingresá un porcentaje distinto de 0'); return; }
+  if (pct < -90 || pct > 1000) { toast('⚠️', 'Porcentaje fuera de rango (entre -90 y 1000)'); return; }
+  if (!cambios.length) { toast('⚠️', 'No hay precios seleccionados para ajustar'); return; }
+
+  const btn = document.getElementById('am-aplicar-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="loader"></span> Aplicando...';
+
+  for (const c of cambios) {
+    if (c.tipo === 'cat') c.obj.precioFijo = c.despues;
+    else c.obj.precio = c.despues;
+    if (config.scriptUrl) {
+      try {
+        await fetch(config.scriptUrl, {
+          method: 'POST', mode: 'no-cors',
+          headers: { 'Content-Type': 'text/plain' },
+          body: JSON.stringify(c.tipo === 'cat' ? { action: 'saveCatalogo', ...c.obj } : { action: 'savePromo', ...c.obj })
+        });
+      } catch (e) { /* sin conexión: queda en el caché local igual */ }
+    }
+  }
+
+  renderCatalogoTab();
+  renderPromosTab();
+  document.getElementById('aumento-masivo-modal')?.remove();
+  const n = cambios.length;
+  toast('✅', `${n} precio${n === 1 ? '' : 's'} ajustado${n === 1 ? '' : 's'} (${pct > 0 ? '+' : ''}${pct}%)`);
+}
+
 // ─── Renderizado de Trabajos ───
 
 // ─── Modo margen ───
@@ -4260,6 +4536,187 @@ function enviarPresupuestoWhatsApp() {
   msg += `\n_Soluciones 3D, sin vueltas_ ✨`;
 
   window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
+}
+
+// ─── Presupuesto en PDF ───
+// jsPDF se carga bajo demanda (solo la primera vez que se genera un PDF)
+let _jspdfPromise = null;
+function _cargarJsPDF() {
+  if (window.jspdf?.jsPDF) return Promise.resolve();
+  if (!_jspdfPromise) {
+    _jspdfPromise = new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+      s.onload = resolve;
+      s.onerror = () => { _jspdfPromise = null; reject(new Error('No se pudo cargar jsPDF')); };
+      document.head.appendChild(s);
+    });
+  }
+  return _jspdfPromise;
+}
+
+// Dibuja el PDF del presupuesto. Recibe un objeto con todos los datos ya resueltos.
+function _construirPdfPresupuesto(d) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  const W = 210, M = 18, CW = W - M * 2;
+  const fmt = v => '$ ' + Math.round(v).toLocaleString('es-AR');
+  const AZUL = [26, 159, 212], AZUL_B = [41, 196, 255], OSCURO = [10, 12, 16],
+        GRIS = [110, 125, 145], TEXTO = [35, 45, 60], SUAVE = [238, 243, 248];
+
+  // ── Encabezado ──
+  doc.setFillColor(...OSCURO); doc.rect(0, 0, W, 40, 'F');
+  doc.setFillColor(...AZUL);   doc.rect(0, 40, W, 1.2, 'F');
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(26);
+  doc.setTextColor(255, 255, 255); doc.text('ZD', M, 21);
+  doc.setTextColor(...AZUL_B);     doc.text('3D', M + doc.getTextWidth('ZD'), 21);
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(...GRIS);
+  doc.text('SOLUCIONES 3D, SIN VUELTAS', M, 28);
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(18); doc.setTextColor(255, 255, 255);
+  doc.text('PRESUPUESTO', W - M, 20, { align: 'right' });
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(...GRIS);
+  doc.text('N° ' + d.numero + '   ·   ' + d.fecha, W - M, 27, { align: 'right' });
+
+  // ── Cliente / validez ──
+  let y = 54;
+  doc.setFontSize(8.5); doc.setTextColor(...GRIS); doc.setFont('helvetica', 'bold');
+  doc.text('CLIENTE', M, y);
+  doc.text('VÁLIDO HASTA', W - M, y, { align: 'right' });
+  y += 6;
+  doc.setFontSize(12); doc.setTextColor(...TEXTO);
+  doc.text(d.cliente || 'Consumidor final', M, y);
+  doc.setFont('helvetica', 'normal');
+  doc.text(d.vencimiento, W - M, y, { align: 'right' });
+  if (d.entrega) {
+    y += 6; doc.setFontSize(9); doc.setTextColor(...GRIS);
+    doc.text('Entrega estimada: ' + d.entrega, M, y);
+  }
+  y += 10;
+
+  // ── Tabla ──
+  const cantX = M + 100, unitR = M + 140, subR = W - M - 3;
+  doc.setFillColor(...OSCURO); doc.rect(M, y, CW, 9, 'F');
+  doc.setFontSize(8.5); doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold');
+  doc.text('DESCRIPCIÓN', M + 3, y + 6);
+  doc.text('CANT.', cantX, y + 6, { align: 'center' });
+  doc.text('P. UNIT.', unitR, y + 6, { align: 'right' });
+  doc.text('SUBTOTAL', subR, y + 6, { align: 'right' });
+  y += 9;
+
+  const tituloLines = doc.splitTextToSize(d.titulo, 78);
+  const detalles = [];
+  if (d.material || d.gramos > 0) {
+    let m = 'Material: ' + (d.material || 'filamento');
+    if (d.gramos > 0) m += ' · ' + d.gramos + ' g' + (d.cantidad > 1 ? ' c/u' : '');
+    detalles.push(m);
+  }
+  if (d.horas > 0) detalles.push('Tiempo de impresión: ' + d.horas + ' h' + (d.cantidad > 1 ? ' c/u' : ''));
+  if (d.consumibles.length) detalles.push('Incluye: ' + d.consumibles.join(', '));
+  if (d.notas) doc.splitTextToSize('Detalle: ' + d.notas, 78).forEach(l => detalles.push(l));
+
+  const rowH = 4 + tituloLines.length * 5.5 + detalles.length * 4.5 + 3;
+  doc.setFillColor(...SUAVE); doc.rect(M, y, CW, rowH, 'F');
+  doc.setFontSize(10.5); doc.setTextColor(...TEXTO); doc.setFont('helvetica', 'bold');
+  let ty = y + 7;
+  tituloLines.forEach(l => { doc.text(l, M + 3, ty); ty += 5.5; });
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(...GRIS);
+  detalles.forEach(l => { doc.text(l, M + 3, ty); ty += 4.5; });
+  doc.setFontSize(10); doc.setTextColor(...TEXTO);
+  doc.text(String(d.cantidad), cantX, y + 7, { align: 'center' });
+  doc.text(fmt(d.unitario), unitR, y + 7, { align: 'right' });
+  doc.setFont('helvetica', 'bold');
+  doc.text(fmt(d.total), subR, y + 7, { align: 'right' });
+  y += rowH + 10;
+
+  // ── Total / seña / saldo ──
+  const boxW = 80, boxX = W - M - boxW;
+  doc.setFillColor(...OSCURO); doc.rect(boxX, y, boxW, 12, 'F');
+  doc.setFontSize(10); doc.setTextColor(255, 255, 255);
+  doc.text('TOTAL', boxX + 4, y + 8);
+  doc.setFontSize(14); doc.setTextColor(...AZUL_B);
+  doc.text(fmt(d.total), boxX + boxW - 4, y + 8.5, { align: 'right' });
+  y += 12;
+  if (d.adelanto > 0) {
+    y += 7;
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5); doc.setTextColor(...GRIS);
+    doc.text('Seña: ' + fmt(d.adelanto), boxX + boxW, y, { align: 'right' });
+    y += 6;
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(10.5); doc.setTextColor(...TEXTO);
+    doc.text('Saldo contra entrega: ' + fmt(d.total - d.adelanto), boxX + boxW, y, { align: 'right' });
+  }
+
+  // ── Pie ──
+  const fy = 272;
+  doc.setDrawColor(...AZUL); doc.setLineWidth(0.4); doc.line(M, fy, W - M, fy);
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(...GRIS);
+  doc.text('Precios expresados en pesos argentinos (ARS). Presupuesto sujeto a disponibilidad.', M, fy + 6);
+  if (d.whatsapp) {
+    doc.setFont('helvetica', 'bold'); doc.setTextColor(...TEXTO);
+    doc.text('Pedidos y consultas: WhatsApp +' + d.whatsapp, M, fy + 12);
+  }
+  doc.setFont('helvetica', 'normal'); doc.setTextColor(...GRIS);
+  doc.text('¡Gracias por confiar en ZD3D!', W - M, fy + 12, { align: 'right' });
+
+  return doc;
+}
+
+async function enviarPresupuestoPDF() {
+  const q = calcQuote();
+  if (!q.total) { toast('⚠️', 'Cargá gramos/horas o un margen para cotizar primero'); return; }
+
+  toast('⏳', 'Generando PDF...');
+  try { await _cargarJsPDF(); }
+  catch (e) { toast('❌', 'No pude cargar el generador de PDF. ¿Estás sin internet?'); return; }
+
+  const cliente  = document.getElementById('q-cliente').value.trim();
+  const stl      = document.getElementById('q-stl').value.trim();
+  const gramos   = parseFloat(document.getElementById('q-gramos').value) || 0;
+  const horas    = parseFloat(document.getElementById('q-horas').value) || 0;
+  const notas    = document.getElementById('q-notas')?.value.trim() || '';
+  const adelanto = parseFloat(document.getElementById('q-adelanto')?.value) || 0;
+  const entregaV = document.getElementById('q-entrega')?.value || '';
+
+  let material = '';
+  const filSel = document.getElementById('q-filamento-select');
+  if (filSel && filSel.value && filSel.value !== 'manual') {
+    const f = (typeof bibliotecaFilamentos !== 'undefined' ? bibliotecaFilamentos : []).find(x => x.id === filSel.value);
+    if (f) material = [f.tipo, f.marca].filter(Boolean).join(' ');
+  }
+
+  const hoy  = new Date();
+  const venc = new Date(Date.now() + 7 * 86400000);
+  const pad  = n => String(n).padStart(2, '0');
+
+  const doc = _construirPdfPresupuesto({
+    numero:      'ZD-' + hoy.getFullYear() + pad(hoy.getMonth() + 1) + pad(hoy.getDate()) + '-' + pad(hoy.getHours()) + pad(hoy.getMinutes()),
+    fecha:       hoy.toLocaleDateString('es-AR'),
+    vencimiento: venc.toLocaleDateString('es-AR'),
+    cliente, material, gramos, horas, notas,
+    titulo:      stl || 'Impresión 3D personalizada',
+    cantidad:    q.cantidad,
+    unitario:    q.total / q.cantidad,
+    total:       q.total,
+    adelanto,
+    entrega:     entregaV ? new Date(entregaV + 'T00:00:00').toLocaleDateString('es-AR') : '',
+    consumibles: (typeof trabajoConsumibles !== 'undefined' ? trabajoConsumibles : []).map(c => c.nombre),
+    whatsapp:    config.whatsapp || ''
+  });
+
+  const nombreArchivo = 'Presupuesto_ZD3D_' + (cliente || 'cliente').replace(/[^\p{L}\p{N}\-]+/gu, '_') + '_' + hoy.toISOString().slice(0, 10) + '.pdf';
+
+  // En celular: compartir directo (WhatsApp adjunta el PDF). En PC: se descarga.
+  try {
+    const file = new File([doc.output('blob')], nombreArchivo, { type: 'application/pdf' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], title: 'Presupuesto ZD3D', text: 'Presupuesto ZD3D' + (cliente ? ' para ' + cliente : '') });
+      toast('✅', 'Presupuesto compartido');
+      return;
+    }
+  } catch (e) {
+    if (e.name === 'AbortError') return; // el usuario cerró el menú de compartir
+  }
+  doc.save(nombreArchivo);
+  toast('✅', 'PDF descargado — adjuntalo en WhatsApp o mail');
 }
 
 // ─── Descuento de stock de filamento ───
